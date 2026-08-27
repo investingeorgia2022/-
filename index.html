@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>მიშნა ქართულად</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE_KEY"></script>
     <style>
         .dynamic-text-hebrew { font-size: calc(1.25rem * var(--text-scale, 1)); }
         .dynamic-text-georgian { font-size: calc(0.875rem * var(--text-scale, 1)); }
@@ -88,7 +87,8 @@
         </div>
 
     </div>
-        <script>
+
+    <script>
     const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
     const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
     const PROXY_URL = `https://corsproxy.io/?${encodeURIComponent(DIRECT_CSV_URL)}`;
@@ -107,6 +107,7 @@
 
     let allMishnayot = [];
     let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
+    let currentAudio = null;
 
     function updateFontScale() {
         document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -281,8 +282,7 @@
         perekSelect.disabled = false;
         applyFilters();
     }
-
-    function onPerekChange() {
+function onPerekChange() {
         const selectedSeder = document.getElementById('sederSelect').value;
         const selectedMasekhet = document.getElementById('masekhetSelect').value;
         const selectedPerek = document.getElementById('perekSelect').value;
@@ -422,8 +422,7 @@
                 </div>
                 <p class="dynamic-text-hebrew font-serif text-slate-900 leading-relaxed">${item.hebrew}</p>
             </div>
-
-            ${item.transliteration ? `
+${item.transliteration ? `
             <div class="bg-slate-50 border-l-4 border-slate-400 p-3 rounded-xl mb-3">
                 <span class="text-[10px] font-bold text-slate-500 block mb-1">ტრანსლიტერაცია</span>
                 <p class="dynamic-text-trans italic text-slate-700 leading-relaxed">${item.transliteration}</p>
@@ -495,49 +494,44 @@
 
     function escapeQuotes(str) {
         if (!str) return '';
-        return str.replace(/'/g, "\\\\'").replace(/"/g, '&quot;').replace(/\\n/g, ' ');
+        return str.replace(/'/g, "\\\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
     }
 
     function speakText(text, lang) {
-    stopSpeech(); // წინა ხმის გაჩერება
+        stopSpeech();
+        if (!text) return;
 
-    if (!text) return;
-
-    // ებრაული ტექსტისთვის (Google TTS-ის პირდაპირი ბმული)
-    if (lang === 'he') {
-        const cleanText = text.replace(/[\u0591-\u05C7]/g, ""); // ნეკუდოტის გასუფთავება უკეთესი გაჟღერებისთვის
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=iw&client=tw-ob`;
-        const audio = new Audio(url);
-        audio.play().catch(e => {
-            // თუ Google-ის ლინკმა დაიბლოკა, ვიყენებთ ResponsiveVoice-ს
-            if (typeof responsiveVoice !== 'undefined') {
-                responsiveVoice.speak(text, "Hebrew Male");
-            }
-        });
-    } 
-    // ქართული ტექსტისთვის (ბრაუზერის Web Speech API)
-    else {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ka-GE';
-            utterance.rate = 0.9; // ოდნავ ნელი, მკაფიო სიჩქარე
-            
-            // ვამოწმებთ არის თუ არა ქართული ხმა ხელმისაწვდომი
-            const voices = window.speechSynthesis.getVoices();
-            const kaVoice = voices.find(v => v.lang.includes('ka') || v.lang.includes('GE'));
-            if (kaVoice) utterance.voice = kaVoice;
-
-            window.speechSynthesis.speak(utterance);
+        if (lang === 'he') {
+            // ებრაული ტექსტის გაჟღერება Google TTS-ით
+            const cleanText = text.replace(/[\u0591-\u05C7]/g, "");
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=iw&client=tw-ob`;
+            currentAudio = new Audio(url);
+            currentAudio.play().catch(e => {
+                // სათადარიგო ვარიანტი ბრაუზერის ხმით
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'he-IL';
+                window.speechSynthesis.speak(utterance);
+            });
         } else {
-            alert("თქვენს ბრაუზერს ხმოვანი ფუნქციის მხარდაჭერა არ აქვს.");
+            // ქართული ტექსტის გაჟღერება ბრაუზერის ხმით
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ka-GE';
+                utterance.rate = 0.9;
+                
+                const voices = window.speechSynthesis.getVoices();
+                const kaVoice = voices.find(v => v.lang.includes('ka') || v.lang.includes('GE'));
+                if (kaVoice) utterance.voice = kaVoice;
+
+                window.speechSynthesis.speak(utterance);
+            }
         }
     }
-}
-
 
     function stopSpeech() {
-        if (typeof responsiveVoice !== 'undefined' && responsiveVoice.isPlaying()) {
-            responsiveVoice.stop();
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
         }
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
