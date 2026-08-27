@@ -8,75 +8,135 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-4 font-sans">
 
-    <div class="max-w-xl mx-auto bg-white rounded-2xl shadow-md overflow-hidden p-5 border border-slate-200">
-        
-        <!-- სათაური -->
-        <div class="text-center mb-6">
-            <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">ზერაიმი (זרעים)</span>
-            <h1 class="text-2xl font-extrabold text-slate-800 mt-1">ტრაქტატი ბერახოთი</h1>
-            <p class="text-xs text-slate-500 font-semibold mt-1">თავი 1 • მიშნა 1</p>
+    <div id="app" class="max-w-xl mx-auto space-y-6">
+        <!-- ჩატვირთვის ინდიკატორი -->
+        <div id="loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
+            <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება Google Sheet-იდან...</p>
         </div>
-
-        <!-- ებრაული ორიგინალი (RTL) -->
-        <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-4">
-            <span class="text-[10px] font-bold text-amber-700 block mb-1">מקור (ორიგინალი)</span>
-            <p class="text-xl font-serif text-slate-900 leading-relaxed">
-                מֵאֵימָתַי קוֹרְאִין אֶת שְׁמַע בְּעַרְבִין? מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכֹל בִּתְרוּמָתָן...
-            </p>
-        </div>
-
-        <!-- ქართული თარგმანი -->
-        <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6">
-            <span class="text-[10px] font-bold text-emerald-700 block mb-1">ქართული თარგმანი</span>
-            <p class="text-sm text-slate-800 leading-relaxed">
-                როდიდან [რომელი საათიდან] კითხულობენ „შემა“-ს საღამოობით? იმ საათიდან, როდესაც ქოჰენები (მღვდელმსახურები) შედიან თავიანთი თრუმაჰის (შეწირულობის) საჭმელად...
-            </p>
-        </div>
-
-        <!-- განმარტებები (Tabs) -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="flex border-b border-slate-200 bg-slate-50">
-                <button onclick="switchTab('kehati')" id="tab-kehati" class="flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white">
-                    📖 კეჰათი
-                </button>
-                <button onclick="switchTab('bartenura')" id="tab-bartenura" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600">
-                    📜 ბარტენურა
-                </button>
-            </div>
-
-            <div class="p-4 bg-white text-xs leading-relaxed text-slate-600">
-                <div id="content-kehati">
-                    <strong class="block text-orange-600 mb-1">რაბინ პინხას კეჰატის განმარტება:</strong>
-                    ეს მიშნა ადგენს საღამოს „შემა ისრაელის“ წაკითხვის დროის დასაწყისს. რადგან თორაში წერია „როცა დაწვები და როცა ადგები“, პირველ რიგში განხილულია საღამოს ლოცვის დრო. მიშნა დროს განსაზღვრავს ცნობილი ყოველდღიური მოვლენით: უწმინდურებისგან განწმენდილი ქოჰენი, რომელმაც ამოანათა მზე, უფლებას იღებს ჭამოს წმინდა შეწირულობა.
-                </div>
-                <div id="content-bartenura" class="hidden">
-                    <strong class="block text-purple-600 mb-1">რაბი ოვადია ბარტენურელის განმარტება:</strong>
-                    „როდიდან კითხულობენ...“ — თორაში წერია: „და ილაპარაკებ მათზე... როცა დაწვები და როცა ადგები“. ამიტომ, ჯერ საღამოს „შემას“ დროზე სვამს კითხვას, რადგან თორაში ჯერ „დაწოლა“ (საღამო) არის ნახსენები. „როდესაც ქოჰენები შედიან...“ — იგულისხმება ქოჰენები, რომლებიც იყვნენ უწმინდურნი და იმავე დღეს ჩავიდნენ მიქვეში.
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script>
-        function switchTab(tab) {
-            const kehatiContent = document.getElementById('content-kehati');
-            const bartenuraContent = document.getElementById('content-bartenura');
-            const kehatiTab = document.getElementById('tab-kehati');
-            const bartenuraTab = document.getElementById('tab-bartenura');
+        const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-            if (tab === 'kehati') {
+        async function fetchMishnaData() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const text = await response.text();
+                
+                // Google Sheets JSON მონაცემების დამუშავება
+                const json = JSON.parse(text.substr(47).slice(0, -2));
+                const rows = json.table.rows;
+
+                const app = document.getElementById('app');
+                app.innerHTML = ''; 
+
+                rows.forEach((row, index) => {
+                    const data = row.c;
+                    if (!data || !data[0]) return; 
+
+                    const item = {
+                        seder: data[1]?.v || '',
+                        masekhet: data[2]?.v || '',
+                        perek: data[3]?.v || '',
+                        mishna: data[4]?.v || '',
+                        hebrew: data[5]?.v || '',
+                        transliteration: data[6]?.v || '',
+                        georgian: data[7]?.v || '',
+                        kehati: data[8]?.v || '',
+                        bartenura: data[9]?.v || ''
+                    };
+
+                    app.appendChild(createMishnaCard(item, index));
+                });
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <p class="text-red-500 font-bold">შეცდომა მონაცემების ჩატვირთვისას!</p>
+                    <p class="text-xs text-slate-400 mt-1">დარწმუნდით, რომ Google Sheet გაზიარებულია (Anyone with the link).</p>
+                `;
+            }
+        }
+
+        function createMishnaCard(item, id) {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-2xl shadow-md overflow-hidden p-5 border border-slate-200 mb-6";
+            
+            card.innerHTML = `
+                <!-- სათაური -->
+                <div class="text-center mb-6">
+                    <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">${item.seder}</span>
+                    <h1 class="text-2xl font-extrabold text-slate-800 mt-1">ტრაქტატი ${item.masekhet}</h1>
+                    <p class="text-xs text-slate-500 font-semibold mt-1">თავი ${item.perek} • მიშნა ${item.mishna}</p>
+                </div>
+
+                <!-- ებრაული ორიგინალი -->
+                <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3">
+                    <span class="text-[10px] font-bold text-amber-700 block mb-1">מקור (ორიგინალი)</span>
+                    <p class="text-xl font-serif text-slate-900 leading-relaxed">${item.hebrew}</p>
+                </div>
+
+                <!-- ტრანსლიტერაცია -->
+                ${item.transliteration ? `
+                <div class="bg-slate-50 border-l-4 border-slate-400 p-3 rounded-xl mb-3">
+                    <span class="text-[10px] font-bold text-slate-500 block mb-1">ტრანსლიტერაცია (წაკითხვა)</span>
+                    <p class="text-xs italic text-slate-700 leading-relaxed">${item.transliteration}</p>
+                </div>
+                ` : ''}
+
+                <!-- ქართული თარგმანი -->
+                <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6">
+                    <span class="text-[10px] font-bold text-emerald-700 block mb-1">ქართული თარგმანი</span>
+                    <p class="text-sm text-slate-800 leading-relaxed">${item.georgian}</p>
+                </div>
+
+                <!-- განმარტებები (ჯერ ბარტენურა, მერე კეჰათი) -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="flex border-b border-slate-200 bg-slate-50">
+                        <button onclick="switchTab(${id}, 'bartenura')" id="tab-bartenura-${id}" class="flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white">
+                            📜 ბარტენურა
+                        </button>
+                        <button onclick="switchTab(${id}, 'kehati')" id="tab-kehati-${id}" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600">
+                            📖 კეჰათი
+                        </button>
+                    </div>
+
+                    <div class="p-4 bg-white text-xs leading-relaxed text-slate-600">
+                        <!-- პირველადი აქტიური ჩანართი: ბარტენურა -->
+                        <div id="content-bartenura-${id}">
+                            <strong class="block text-purple-600 mb-1">რაბი ოვადია ბარტენურელის განმარტება:</strong>
+                            ${item.bartenura || 'განმარტება არ არის.'}
+                        </div>
+                        <div id="content-kehati-${id}" class="hidden">
+                            <strong class="block text-orange-600 mb-1">რაბინ პინხას კეჰატის განმარტება:</strong>
+                            ${item.kehati || 'განმარტება არ არის.'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function switchTab(id, tab) {
+            const kehatiContent = document.getElementById(`content-kehati-${id}`);
+            const bartenuraContent = document.getElementById(`content-bartenura-${id}`);
+            const kehatiTab = document.getElementById(`tab-kehati-${id}`);
+            const bartenuraTab = document.getElementById(`tab-bartenura-${id}`);
+
+            if (tab === 'bartenura') {
+                bartenuraContent.classList.remove('hidden');
+                kehatiContent.classList.add('hidden');
+                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white";
+                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600";
+            } else {
                 kehatiContent.classList.remove('hidden');
                 bartenuraContent.classList.add('hidden');
                 kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
-            } else {
-                kehatiContent.classList.add('hidden');
-                bartenuraContent.classList.remove('hidden');
-                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white";
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600";
+                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
             }
         }
+
+        fetchMishnaData();
     </script>
 </body>
 </html>
