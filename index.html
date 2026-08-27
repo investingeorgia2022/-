@@ -131,7 +131,7 @@
                 "თემურა (תמורה)": 7,
                 "ქრითოთი (כריתות)": 6,
                 "მეყილა (מעילה)": 6,
-                "თამიდი (תמיד)": 7,
+                "თამიდი (თמיד)": 7,
                 "მიდოთი (מידות)": 5,
                 "კინემი (קינים)": 3
             },
@@ -152,6 +152,7 @@
         };
 
         let allMishnayot = [];
+        let currentlySpeakingText = null;
 
         function cleanString(str) {
             if (!str) return '';
@@ -261,6 +262,7 @@
         }
 
         function applyFilters() {
+            stopSpeech();
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const selectedSeder = document.getElementById('sederSelect').value;
             const selectedMasekhet = document.getElementById('masekhetSelect').value;
@@ -298,6 +300,7 @@
         }
 
         function resetFilters() {
+            stopSpeech();
             document.getElementById('searchInput').value = '';
             document.getElementById('sederSelect').value = '';
             
@@ -347,8 +350,13 @@
                 </div>
 
                 <!-- ებრაული ორიგინალი -->
-                <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3">
-                    <span class="text-[10px] font-bold text-amber-700 block mb-1">מקור (ორიგინალი)</span>
+                <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+                        <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he-IL')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                            <span>🔊</span> <span>მოსმენა</span>
+                        </button>
+                    </div>
                     <p class="text-xl font-serif text-slate-900 leading-relaxed">${item.hebrew}</p>
                 </div>
 
@@ -361,8 +369,13 @@
                 ` : ''}
 
                 <!-- ქართული თარგმანი -->
-                <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6">
-                    <span class="text-[10px] font-bold text-emerald-700 block mb-1">ქართული თარგმანი</span>
+                <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6 relative">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-bold text-emerald-700">ქართული თარგმანი</span>
+                        <button onclick="speakText('${escapeQuotes(item.georgian)}', 'ka-GE')" class="text-xs bg-emerald-200/60 hover:bg-emerald-300/80 text-emerald-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                            <span>🔊</span> <span>მოსმენა</span>
+                        </button>
+                    </div>
                     <p class="text-sm text-slate-800 leading-relaxed">${item.georgian}</p>
                 </div>
 
@@ -392,7 +405,50 @@
             return card;
         }
 
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
+        }
+
+        function speakText(text, lang) {
+            if (!('speechSynthesis' in window)) {
+                alert('თქვენს ბრაუზერს არ აქვს ხმოვანი წაკითხვის მხარდაჭერა.');
+                return;
+            }
+
+            if (window.speechSynthesis.speaking && currentlySpeakingText === text) {
+                stopSpeech();
+                return;
+            }
+
+            stopSpeech();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.9; // ცოტათი ნელი და მკაფიო ტემპი
+
+            currentlySpeakingText = text;
+
+            utterance.onend = () => {
+                currentlySpeakingText = null;
+            };
+
+            utterance.onerror = () => {
+                currentlySpeakingText = null;
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopSpeech() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            currentlySpeakingText = null;
+        }
+
         function showDailyMishna() {
+            stopSpeech();
             if (allMishnayot.length === 0) return;
 
             const now = new Date();
@@ -404,29 +460,4 @@
             const dailyIndex = dayOfYear % allMishnayot.length;
             const dailyMishna = allMishnayot[dailyIndex];
 
-            renderMishnayot([dailyMishna], true);
-        }
-
-        function switchTab(id, tab) {
-            const kehatiContent = document.getElementById(`content-kehati-${id}`);
-            const bartenuraContent = document.getElementById(`content-bartenura-${id}`);
-            const kehatiTab = document.getElementById(`tab-kehati-${id}`);
-            const bartenuraTab = document.getElementById(`tab-bartenura-${id}`);
-
-            if (tab === 'bartenura') {
-                bartenuraContent.classList.remove('hidden');
-                kehatiContent.classList.add('hidden');
-                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white";
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600";
-            } else {
-                kehatiContent.classList.remove('hidden');
-                bartenuraContent.classList.add('hidden');
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
-            }
-        }
-
-        fetchMishnaData();
-    </script>
-</body>
-</html>
+            renderMishnayot([
