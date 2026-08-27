@@ -10,10 +10,10 @@
 
     <div class="max-w-xl mx-auto space-y-4">
         
-        <!-- ძიების და დღის მიშნის ბლოკი -->
+        <!-- მართვისა და ფილტრების ბლოკი -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
             
-            <!-- ძიების ინპუტი -->
+            <!-- ძიება -->
             <div class="relative">
                 <input 
                     type="text" 
@@ -24,23 +24,39 @@
                 >
             </div>
 
-            <!-- დღის მიშნის ღილაკი -->
-            <button 
-                onclick="showDailyMishna()" 
-                class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-2"
-            >
-                <span>📅</span>
-                <span>დღის მიშნის ნახვა (משנה יומית)</span>
-            </button>
-            
-            <!-- ყველა მიშნის დაბრუნების ღილაკი (საჭიროებისას გამოჩნდება) -->
-            <button 
-                id="resetBtn" 
-                onclick="renderMishnayot(allMishnayot)" 
-                class="hidden w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2 px-4 rounded-xl transition"
-            >
-                ↺ ყველა მიშნის გამოჩენა
-            </button>
+            <!-- ფილტრები: სედერი, ტრაქტატი, თავი -->
+            <div class="grid grid-cols-3 gap-2">
+                <select id="sederSelect" onchange="onSederChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold">
+                    <option value="">ყველა სედერი</option>
+                </select>
+
+                <select id="masekhetSelect" onchange="onMasekhetChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
+                    <option value="">ყველა ტრაქტატი</option>
+                </select>
+
+                <select id="perekSelect" onchange="onPerekChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
+                    <option value="">ყველა თავი</option>
+                </select>
+            </div>
+
+            <!-- დღის მიშნა და ფილტრების გასუფთავება -->
+            <div class="flex gap-2">
+                <button 
+                    onclick="showDailyMishna()" 
+                    class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
+                >
+                    <span>📅</span>
+                    <span>დღის მიშნა</span>
+                </button>
+                
+                <button 
+                    id="resetBtn" 
+                    onclick="resetFilters()" 
+                    class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 px-4 rounded-xl transition"
+                >
+                    ↺ გასუფთავება
+                </button>
+            </div>
         </div>
 
         <!-- მიშნების სია -->
@@ -75,10 +91,10 @@
 
                     allMishnayot.push({
                         id: index,
-                        seder: data[1]?.v || '',
-                        masekhet: data[2]?.v || '',
-                        perek: data[3]?.v || '',
-                        mishna: data[4]?.v || '',
+                        seder: (data[1]?.v || '').toString().trim(),
+                        masekhet: (data[2]?.v || '').toString().trim(),
+                        perek: (data[3]?.v || '').toString().trim(),
+                        mishna: (data[4]?.v || '').toString().trim(),
                         hebrew: data[5]?.v || '',
                         transliteration: data[6]?.v || '',
                         georgian: data[7]?.v || '',
@@ -87,6 +103,7 @@
                     });
                 });
 
+                populateSederDropdown();
                 renderMishnayot(allMishnayot);
             } catch (error) {
                 document.getElementById('loading').innerHTML = `
@@ -95,16 +112,129 @@
             }
         }
 
+        // ფილტრების შევსების ლოგიკა
+        function populateSederDropdown() {
+            const sederSelect = document.getElementById('sederSelect');
+            const sedarim = [...new Set(allMishnayot.map(m => m.seder).filter(Boolean))];
+            
+            sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
+            sedarim.forEach(s => {
+                sederSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+        }
+
+        function onSederChange() {
+            const selectedSeder = document.getElementById('sederSelect').value;
+            const masekhetSelect = document.getElementById('masekhetSelect');
+            const perekSelect = document.getElementById('perekSelect');
+
+            perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+            perekSelect.disabled = true;
+
+            if (!selectedSeder) {
+                masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+                masekhetSelect.disabled = true;
+                applyFilters();
+                return;
+            }
+
+            const masekhtot = [...new Set(allMishnayot
+                .filter(m => m.seder === selectedSeder)
+                .map(m => m.masekhet)
+                .filter(Boolean))];
+
+            masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+            masekhtot.forEach(m => {
+                masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+            masekhetSelect.disabled = false;
+
+            applyFilters();
+        }
+
+        function onMasekhetChange() {
+            const selectedSeder = document.getElementById('sederSelect').value;
+            const selectedMasekhet = document.getElementById('masekhetSelect').value;
+            const perekSelect = document.getElementById('perekSelect');
+
+            if (!selectedMasekhet) {
+                perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+                perekSelect.disabled = true;
+                applyFilters();
+                return;
+            }
+
+            const perakim = [...new Set(allMishnayot
+                .filter(m => m.seder === selectedSeder && m.masekhet === selectedMasekhet)
+                .map(m => m.perek)
+                .filter(Boolean))];
+
+            perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+            perakim.sort((a, b) => Number(a) - Number(b)).forEach(p => {
+                perekSelect.innerHTML += `<option value="${p}">თავი ${p}</option>`;
+            });
+            perekSelect.disabled = false;
+
+            applyFilters();
+        }
+
+        function onPerekChange() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedSeder = document.getElementById('sederSelect').value;
+            const selectedMasekhet = document.getElementById('masekhetSelect').value;
+            const selectedPerek = document.getElementById('perekSelect').value;
+
+            let filtered = allMishnayot;
+
+            if (selectedSeder) {
+                filtered = filtered.filter(m => m.seder === selectedSeder);
+            }
+            if (selectedMasekhet) {
+                filtered = filtered.filter(m => m.masekhet === selectedMasekhet);
+            }
+            if (selectedPerek) {
+                filtered = filtered.filter(m => m.perek.toString() === selectedPerek.toString());
+            }
+
+            if (query) {
+                filtered = filtered.filter(item => 
+                    item.georgian.toLowerCase().includes(query) ||
+                    item.hebrew.includes(query) ||
+                    item.transliteration.toLowerCase().includes(query) ||
+                    item.kehati.toLowerCase().includes(query) ||
+                    item.bartenura.toLowerCase().includes(query)
+                );
+            }
+
+            renderMishnayot(filtered);
+        }
+
+        function handleSearch() {
+            applyFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sederSelect').value = '';
+            
+            const masekhetSelect = document.getElementById('masekhetSelect');
+            masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+            masekhetSelect.disabled = true;
+
+            const perekSelect = document.getElementById('perekSelect');
+            perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+            perekSelect.disabled = true;
+
+            renderMishnayot(allMishnayot);
+        }
+
         function renderMishnayot(list, isDaily = false) {
             const app = document.getElementById('app');
-            const resetBtn = document.getElementById('resetBtn');
             app.innerHTML = ''; 
-
-            if (list.length === allMishnayot.length && !isDaily) {
-                resetBtn.classList.add('hidden');
-            } else {
-                resetBtn.classList.remove('hidden');
-            }
 
             if (list.length === 0) {
                 app.innerHTML = `<p class="text-center text-xs text-slate-500 py-8">შედეგი ვერ მოიძებნა 🔍</p>`;
@@ -176,29 +306,9 @@
             return card;
         }
 
-        function handleSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            if (!query) {
-                renderMishnayot(allMishnayot);
-                return;
-            }
-
-            const filtered = allMishnayot.filter(item => 
-                item.georgian.toLowerCase().includes(query) ||
-                item.hebrew.includes(query) ||
-                item.transliteration.toLowerCase().includes(query) ||
-                item.masekhet.toLowerCase().includes(query) ||
-                item.kehati.toLowerCase().includes(query) ||
-                item.bartenura.toLowerCase().includes(query)
-            );
-
-            renderMishnayot(filtered);
-        }
-
         function showDailyMishna() {
             if (allMishnayot.length === 0) return;
 
-            // დღევანდელი თარიღის მიხედვით ავტომატურად ირჩევს მიშნას
             const now = new Date();
             const startOfYear = new Date(now.getFullYear(), 0, 0);
             const diff = now - startOfYear;
