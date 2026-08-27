@@ -499,20 +499,41 @@
     }
 
     function speakText(text, lang) {
-        if (responsiveVoice.isPlaying()) {
-            responsiveVoice.stop();
-        }
+    stopSpeech(); // წინა ხმის გაჩერება
 
-        if (lang === 'he') {
-            responsiveVoice.speak(text, "Hebrew Male");
-        } else {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ka-GE';
-                window.speechSynthesis.speak(utterance);
+    if (!text) return;
+
+    // ებრაული ტექსტისთვის (Google TTS-ის პირდაპირი ბმული)
+    if (lang === 'he') {
+        const cleanText = text.replace(/[\u0591-\u05C7]/g, ""); // ნეკუდოტის გასუფთავება უკეთესი გაჟღერებისთვის
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=iw&client=tw-ob`;
+        const audio = new Audio(url);
+        audio.play().catch(e => {
+            // თუ Google-ის ლინკმა დაიბლოკა, ვიყენებთ ResponsiveVoice-ს
+            if (typeof responsiveVoice !== 'undefined') {
+                responsiveVoice.speak(text, "Hebrew Male");
             }
+        });
+    } 
+    // ქართული ტექსტისთვის (ბრაუზერის Web Speech API)
+    else {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ka-GE';
+            utterance.rate = 0.9; // ოდნავ ნელი, მკაფიო სიჩქარე
+            
+            // ვამოწმებთ არის თუ არა ქართული ხმა ხელმისაწვდომი
+            const voices = window.speechSynthesis.getVoices();
+            const kaVoice = voices.find(v => v.lang.includes('ka') || v.lang.includes('GE'));
+            if (kaVoice) utterance.voice = kaVoice;
+
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert("თქვენს ბრაუზერს ხმოვანი ფუნქციის მხარდაჭერა არ აქვს.");
         }
     }
+}
+
 
     function stopSpeech() {
         if (typeof responsiveVoice !== 'undefined' && responsiveVoice.isPlaying()) {
