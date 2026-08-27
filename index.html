@@ -76,11 +76,11 @@
         // სრული იერარქია: 6 სედერი და 63 ტრაქტატი თავების რაოდენობით
         const MISHNA_STRUCTURE = {
             "ზერაიმი (זרעים)": {
-                "ბერახოთი (ברכות)": 9,
+                "ბერახოთ (ברכות)": 9,
                 "ფეა (פאה)": 8,
-                "დმაი (דמאי)": 7,
-                "ქილაიმი (כלאים)": 9,
-                "შევიითი (שביעית)": 10,
+                "დემაი (דמאי)": 7,
+                "ქილაიმ (כלאים)": 9,
+                "შევიყითი (שביעית)": 10,
                 "თრუმოთი (תרומות)": 11,
                 "მაასროთი (מעשרות)": 5,
                 "მაასერ შენი (מעשר שני)": 5,
@@ -142,10 +142,10 @@
                 "ნეგაიმი (נגעים)": 14,
                 "ფარა (פרה)": 12,
                 "თოჰოროთი (טהרות)": 10,
-                "მიქვაოთი (מקוואות)": 10,
+                "მიქვაოთי (מקוואות)": 10,
                 "ნიდა (נדה)": 10,
                 "მახშირინი (מכשירין)": 6,
-                "ზავიმი (זבים)": 5,
+                "ზავიמי (זבים)": 5,
                 "თევულ იომი (טבול יום)": 4,
                 "იადაიმი (ידיים)": 4,
                 "უქცინი (עוקצין)": 3
@@ -153,6 +153,16 @@
         };
 
         let allMishnayot = [];
+
+        // დამხმარე ფუნქცია ტექსტების დასადარებლად (აშორებს ებრაულს, ფრჩხილებს და ზედმეტ ჰარებს)
+        function cleanString(str) {
+            if (!str) return '';
+            return str.toString()
+                      .replace(/\(.*\)/g, '') // აშორებს ფრჩხილებს და მათ შიგთავსს
+                      .replace(/[\u0590-\u05FF]/g, '') // აშორებს ებრაულ ასოებს
+                      .toLowerCase()
+                      .trim();
+        }
 
         async function fetchMishnaData() {
             try {
@@ -261,10 +271,12 @@
             let filtered = allMishnayot;
 
             if (selectedSeder) {
-                filtered = filtered.filter(m => m.seder === selectedSeder);
+                const cleanSelectedSeder = cleanString(selectedSeder);
+                filtered = filtered.filter(m => cleanString(m.seder).includes(cleanSelectedSeder) || cleanSelectedSeder.includes(cleanString(m.seder)));
             }
             if (selectedMasekhet) {
-                filtered = filtered.filter(m => m.masekhet === selectedMasekhet);
+                const cleanSelectedMasekhet = cleanString(selectedMasekhet);
+                filtered = filtered.filter(m => cleanString(m.masekhet).includes(cleanSelectedMasekhet) || cleanSelectedMasekhet.includes(cleanString(m.masekhet)));
             }
             if (selectedPerek) {
                 filtered = filtered.filter(m => m.perek.toString() === selectedPerek.toString());
