@@ -73,14 +73,13 @@
         const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-        // სრული იერარქია: 6 სედერი და 63 ტრაქტატი თავების რაოდენობით
         const MISHNA_STRUCTURE = {
-            "ზერაიმი (זרעים)": {
-                "ბერახოთ (ברכות)": 9,
+            "ზერაყიმი (זרעים)": {
+                "ბერახოთი (ברכות)": 9,
                 "ფეა (פאה)": 8,
-                "დემაი (דמאי)": 7,
-                "ქილაიმ (כלאים)": 9,
-                "შევიყითი (שביעית)": 10,
+                "დმაი (דמאי)": 7,
+                "ქილაიმი (כלאים)": 9,
+                "შევიითი (שביעית)": 10,
                 "თრუმოთი (תרומות)": 11,
                 "მაასროთი (מעשרות)": 5,
                 "მაასერ შენი (מעשר שני)": 5,
@@ -106,7 +105,7 @@
                 "იევამოთი (יבמות)": 16,
                 "ქეთუბოთი (כתובות)": 13,
                 "ნედარიმი (נדרים)": 11,
-                "ნაზირი (נזיר)": 9,
+                "ნაზირი (ნזיר)": 9,
                 "სოტა (סוטה)": 9,
                 "გიტინი (גיטין)": 9,
                 "ქიდუშინი (קידושין)": 4
@@ -132,8 +131,8 @@
                 "თემურა (תמורה)": 7,
                 "ქრითოთი (כריתות)": 6,
                 "მეილა (מעילה)": 6,
-                "თამიდი (תמיד)": 7,
-                "მიდოთი (מידות)": 5,
+                "თამიდი (თמיד)": 7,
+                "მიდოთი (მიדות)": 5,
                 "ქინემი (קינים)": 3
             },
             "თოჰოროთი (טהרות)": {
@@ -142,7 +141,7 @@
                 "ნეგაიმი (נגעים)": 14,
                 "ფარა (פרה)": 12,
                 "თოჰოროთი (טהרות)": 10,
-                "მიქვაოთי (מקוואות)": 10,
+                "მიქვაოთი (מקוואות)": 10,
                 "ნიდა (נדה)": 10,
                 "მახშირინი (מכשירין)": 6,
                 "ზავიמי (זבים)": 5,
@@ -154,12 +153,11 @@
 
         let allMishnayot = [];
 
-        // დამხმარე ფუნქცია ტექსტების დასადარებლად (აშორებს ებრაულს, ფრჩხილებს და ზედმეტ ჰარებს)
         function cleanString(str) {
             if (!str) return '';
             return str.toString()
-                      .replace(/\(.*\)/g, '') // აშორებს ფრჩხილებს და მათ შიგთავსს
-                      .replace(/[\u0590-\u05FF]/g, '') // აშორებს ებრაულ ასოებს
+                      .replace(/\(.*\)/g, '')
+                      .replace(/[\u0590-\u05FF]/g, '')
                       .toLowerCase()
                       .trim();
         }
@@ -178,7 +176,7 @@
                     const data = row.c;
                     if (!data || !data[0]) return; 
 
-                    allMishnayot.push({
+                    const item = {
                         id: index,
                         seder: (data[1]?.v || '').toString().trim(),
                         masekhet: (data[2]?.v || '').toString().trim(),
@@ -189,12 +187,17 @@
                         georgian: data[7]?.v || '',
                         kehati: data[8]?.v || '',
                         bartenura: data[9]?.v || ''
-                    });
+                    };
+
+                    allMishnayot.push(item);
+                    // ვბეჭდავთ კონსოლში თითოეულ ჩანაწერს, რომ ვნახოთ რა წამოიღო ბაზიდან
+                    console.log(`Row ${index}: Seder='${item.seder}', Masekhet='${item.masekhet}', Perek='${item.perek}', Mishna='${item.mishna}'`);
                 });
 
                 populateSederDropdown();
                 renderMishnayot(allMishnayot);
             } catch (error) {
+                console.error(error);
                 document.getElementById('loading').innerHTML = `
                     <p class="text-red-500 font-bold">შეცდომა მონაცემების ჩატვირთვისას!</p>
                 `;
@@ -303,7 +306,7 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('sederSelect').value = '';
             
-            const masekhetSelect = document.getElementById('masekhetSelect');
+            TheMasekhetSelect = document.getElementById('masekhetSelect');
             masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
             masekhetSelect.disabled = true;
 
