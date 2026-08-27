@@ -73,6 +73,85 @@
         const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
+        // სრული იერარქია: 6 სედერი და 63 ტრაქტატი თავების რაოდენობით
+        const MISHNA_STRUCTURE = {
+            "ზერაიმი (זרעים)": {
+                "ბერახოთი (ברכות)": 9,
+                "ფეა (פאה)": 8,
+                "დმაი (דמאי)": 7,
+                "ქილაიმი (כלאים)": 9,
+                "შევიითი (שביעית)": 10,
+                "თრუმოთი (תרומות)": 11,
+                "მაასროთი (מעשרות)": 5,
+                "მაასერ შენი (מעשר שני)": 5,
+                "ხალა (חלה)": 4,
+                "ორლა (ערלה)": 3,
+                "ბიქურიმი (ביכורים)": 4
+            },
+            "მოედი (מועד)": {
+                "შაბათი (שבת)": 24,
+                "ერუვინი (עירובין)": 10,
+                "ფესახიმი (פסחים)": 10,
+                "შექალიმი (שקלים)": 8,
+                "იომა (יומא)": 8,
+                "სუქა (סוכה)": 5,
+                "ბეცა (ביצה)": 5,
+                "როშ ჰაშანა (ראש השנה)": 4,
+                "თაანიტი (תענית)": 4,
+                "მეგილა (מגילה)": 4,
+                "მოედ ქატანი (מועד קטן)": 3,
+                "ხაგიგა (חגיגה)": 3
+            },
+            "ნაშიმი (נשים)": {
+                "იევამოთი (יבמות)": 16,
+                "ქეთუბოთი (כתובות)": 13,
+                "ნედარიმი (נדרים)": 11,
+                "ნაზირი (נזיר)": 9,
+                "სოტა (סוטה)": 9,
+                "გიტინი (גיטין)": 9,
+                "ქიდუშინი (קידושין)": 4
+            },
+            "ნეზიკინი (נזיקין)": {
+                "ბავა კამა (בבא קמא)": 10,
+                "ბავა მეცია (בבא מציעא)": 10,
+                "ბავა ბათრა (בבא בתרא)": 10,
+                "სანჰედრინი (סנהדרין)": 11,
+                "მაქოთი (מכות)": 3,
+                "შევუოთი (שבועות)": 8,
+                "ედუიოთი (עדויות)": 8,
+                "ავოდა ზარა (עבודה זרה)": 5,
+                "ავოთი / პირქე ავოთი (אבות)": 6,
+                "ჰორაიოთი (הוריות)": 3
+            },
+            "ქოდაშიმი (קדשים)": {
+                "ზებახიმი (זבחים)": 14,
+                "მენახოთი (מנחות)": 13,
+                "ხულინი (חולין)": 12,
+                "ბექოროთი (בכורות)": 9,
+                "არაქინი (ערכין)": 9,
+                "თემურა (תמורה)": 7,
+                "ქრითოთი (כריתות)": 6,
+                "მეილა (מעילה)": 6,
+                "თამიდი (תמיד)": 7,
+                "მიდოთი (מידות)": 5,
+                "ქინემი (קינים)": 3
+            },
+            "თოჰოროთი (טהרות)": {
+                "ქელიმი (כלים)": 30,
+                "ოჰოლოტი (אהלות)": 18,
+                "ნეგაიმი (נגעים)": 14,
+                "ფარა (פרה)": 12,
+                "თოჰოროთი (טהרות)": 10,
+                "მიქვაოთი (מקוואות)": 10,
+                "ნიდა (נדה)": 10,
+                "მახშირინი (מכשירין)": 6,
+                "ზავიმი (זבים)": 5,
+                "თევულ იომი (טבול יום)": 4,
+                "იადაიმი (ידיים)": 4,
+                "უქცინი (עוקצין)": 3
+            }
+        };
+
         let allMishnayot = [];
 
         async function fetchMishnaData() {
@@ -112,14 +191,12 @@
             }
         }
 
-        // ფილტრების შევსების ლოგიკა
         function populateSederDropdown() {
             const sederSelect = document.getElementById('sederSelect');
-            const sedarim = [...new Set(allMishnayot.map(m => m.seder).filter(Boolean))];
-            
             sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
-            sedarim.forEach(s => {
-                sederSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            
+            Object.keys(MISHNA_STRUCTURE).forEach(seder => {
+                sederSelect.innerHTML += `<option value="${seder}">${seder}</option>`;
             });
         }
 
@@ -131,18 +208,14 @@
             perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
             perekSelect.disabled = true;
 
-            if (!selectedSeder) {
+            if (!selectedSeder || !MISHNA_STRUCTURE[selectedSeder]) {
                 masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
                 masekhetSelect.disabled = true;
                 applyFilters();
                 return;
             }
 
-            const masekhtot = [...new Set(allMishnayot
-                .filter(m => m.seder === selectedSeder)
-                .map(m => m.masekhet)
-                .filter(Boolean))];
-
+            const masekhtot = Object.keys(MISHNA_STRUCTURE[selectedSeder]);
             masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
             masekhtot.forEach(m => {
                 masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
@@ -157,22 +230,19 @@
             const selectedMasekhet = document.getElementById('masekhetSelect').value;
             const perekSelect = document.getElementById('perekSelect');
 
-            if (!selectedMasekhet) {
+            if (!selectedMasekhet || !MISHNA_STRUCTURE[selectedSeder] || !MISHNA_STRUCTURE[selectedSeder][selectedMasekhet]) {
                 perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
                 perekSelect.disabled = true;
                 applyFilters();
                 return;
             }
 
-            const perakim = [...new Set(allMishnayot
-                .filter(m => m.seder === selectedSeder && m.masekhet === selectedMasekhet)
-                .map(m => m.perek)
-                .filter(Boolean))];
-
+            const totalPerakim = MISHNA_STRUCTURE[selectedSeder][selectedMasekhet];
             perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
-            perakim.sort((a, b) => Number(a) - Number(b)).forEach(p => {
-                perekSelect.innerHTML += `<option value="${p}">თავი ${p}</option>`;
-            });
+            
+            for (let i = 1; i <= totalPerakim; i++) {
+                perekSelect.innerHTML += `<option value="${i}">თავი ${i}</option>`;
+            }
             perekSelect.disabled = false;
 
             applyFilters();
@@ -237,7 +307,13 @@
             app.innerHTML = ''; 
 
             if (list.length === 0) {
-                app.innerHTML = `<p class="text-center text-xs text-slate-500 py-8">შედეგი ვერ მოიძებნა 🔍</p>`;
+                app.innerHTML = `
+                    <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6">
+                        <p class="text-3xl mb-2">📚</p>
+                        <p class="text-sm font-bold text-slate-700 mb-1">ტექსტი ჯერ არ არის დამატებული</p>
+                        <p class="text-xs text-slate-500">ამ არჩეული თავის/ტრაქტატის თარგმანი მალე დაემატება ბაზაში.</p>
+                    </div>
+                `;
                 return;
             }
 
