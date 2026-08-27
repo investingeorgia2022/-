@@ -74,7 +74,7 @@
         const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
         const MISHNA_STRUCTURE = {
-            "ზერაყიმი (זרעים)": {
+            "ზერაიმი (זרעים)": {
                 "ბერახოთი (ברכות)": 9,
                 "ფეა (פאה)": 8,
                 "დმაი (דמאי)": 7,
@@ -106,7 +106,7 @@
                 "ქეთუბოთი (כתובות)": 13,
                 "ნედარიმი (נדרים)": 11,
                 "ნაზირი (ნזיר)": 9,
-                "სოტა (סוטה)": 9,
+                "სოტა (სוטה)": 9,
                 "გიტინი (גיטין)": 9,
                 "ქიდუშინი (קידושין)": 4
             },
@@ -118,13 +118,13 @@
                 "მაქოთი (מכות)": 3,
                 "შევუოთი (שבועות)": 8,
                 "ედუიოთი (עדויות)": 8,
-                "ავოდა ზარა (עבודה זרה)": 5,
+                "ყავოდა ზარა (עבודה זרה)": 5,
                 "ავოთი / პირქე ავოთი (אבות)": 6,
                 "ჰორაიოთი (הוריות)": 3
             },
             "ქოდაშიმი (קדשים)": {
                 "ზებახიმი (זבחים)": 14,
-                "მენახოთი (מנחות)": 13,
+                "მენახოთი (მנחות)": 13,
                 "ხულინი (חולין)": 12,
                 "ბექოროთი (בכורות)": 9,
                 "არაქინი (ערכין)": 9,
@@ -176,7 +176,7 @@
                     const data = row.c;
                     if (!data || !data[0]) return; 
 
-                    const item = {
+                    allMishnayot.push({
                         id: index,
                         seder: (data[1]?.v || '').toString().trim(),
                         masekhet: (data[2]?.v || '').toString().trim(),
@@ -187,17 +187,12 @@
                         georgian: data[7]?.v || '',
                         kehati: data[8]?.v || '',
                         bartenura: data[9]?.v || ''
-                    };
-
-                    allMishnayot.push(item);
-                    // ვბეჭდავთ კონსოლში თითოეულ ჩანაწერს, რომ ვნახოთ რა წამოიღო ბაზიდან
-                    console.log(`Row ${index}: Seder='${item.seder}', Masekhet='${item.masekhet}', Perek='${item.perek}', Mishna='${item.mishna}'`);
+                    });
                 });
 
                 populateSederDropdown();
                 renderMishnayot(allMishnayot);
             } catch (error) {
-                console.error(error);
                 document.getElementById('loading').innerHTML = `
                     <p class="text-red-500 font-bold">შეცდომა მონაცემების ჩატვირთვისას!</p>
                 `;
@@ -306,7 +301,7 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('sederSelect').value = '';
             
-            TheMasekhetSelect = document.getElementById('masekhetSelect');
+            const masekhetSelect = document.getElementById('masekhetSelect');
             masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
             masekhetSelect.disabled = true;
 
@@ -375,16 +370,16 @@
                 <div class="border border-slate-200 rounded-xl overflow-hidden">
                     <div class="flex border-b border-slate-200 bg-slate-50">
                         <button onclick="switchTab(${item.id}, 'bartenura')" id="tab-bartenura-${item.id}" class="flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white">
-                            📜 ბარტენურა
+                            📜 რაბი ყოვადია ბარტანურა
                         </button>
                         <button onclick="switchTab(${item.id}, 'kehati')" id="tab-kehati-${item.id}" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600">
-                            📖 კეჰათი
+                            📖 რაბინ პინხას კეჰათი
                         </button>
                     </div>
 
                     <div class="p-4 bg-white text-xs leading-relaxed text-slate-600">
                         <div id="content-bartenura-${item.id}">
-                            <strong class="block text-purple-600 mb-1">რაბი ოვადია ბარტენურელის განმარტება:</strong>
+                            <strong class="block text-purple-600 mb-1">რაბი ყოვადია ბარტანურას განმარტება:</strong>
                             ${item.bartenura || 'განმარტება არ არის.'}
                         </div>
                         <div id="content-kehati-${item.id}" class="hidden">
@@ -427,7 +422,7 @@
                 kehatiContent.classList.remove('hidden');
                 bartenuraContent.classList.add('hidden');
                 kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
+                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
             }
         }
 
