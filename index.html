@@ -86,7 +86,6 @@
 
         let allMishnayot = [];
         let currentlySpeakingText = null;
-        let currentAudio = null;
 
         function cleanString(str) {
             if (!str) return '';
@@ -389,6 +388,7 @@
             }
 
             stopSpeech();
+            currentlySpeakingText = text;
 
             // ებრაული ტექსტის გახმოვანება
             if (lang === 'he' || lang === 'he-IL') {
@@ -403,36 +403,26 @@
                     utterance.lang = 'he-IL';
                     window.speechSynthesis.speak(utterance);
                 }
-                currentlySpeakingText = text;
                 return;
             }
 
-            // ქართული ტექსტის გახმოვანება (Google Translate TTS)
-            const cleanText = text.replace(/["'\n\r]/g, ' ').trim();
-            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=ka&client=tw-ob`;
-
-            currentAudio = new Audio(ttsUrl);
-            currentAudio.playbackRate = 0.9;
-
-            currentlySpeakingText = text;
-
-            currentAudio.play().catch(error => {
-                console.error("აუდიოს დაკვრის შეცდომა:", error);
-                currentlySpeakingText = null;
-            });
-
-            currentAudio.onended = () => {
-                currentlySpeakingText = null;
-                currentAudio = null;
-            };
+            // ქართული ტექსტის გახმოვანება (ResponsiveVoice + Web Speech API fallback)
+            if (typeof responsiveVoice !== 'undefined' && responsiveVoice.voiceSupport()) {
+                responsiveVoice.speak(text, "Georgian Female", {
+                    pitch: 1,
+                    rate: 0.9,
+                    onend: () => { currentlySpeakingText = null; }
+                });
+            } else if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ka-GE';
+                utterance.rate = 0.9;
+                utterance.onend = () => { currentlySpeakingText = null; };
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
         function stopSpeech() {
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio = null;
-            }
             if (typeof responsiveVoice !== 'undefined') {
                 responsiveVoice.cancel();
             }
@@ -468,7 +458,7 @@
                 kehatiContent.classList.remove('hidden');
                 bartenuraContent.classList.add('hidden');
                 kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-                kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
+                bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
             }
         }
 
