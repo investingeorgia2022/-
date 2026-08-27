@@ -71,7 +71,8 @@
 
     <script>
         const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
-        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+        // CSV ექსპორტის ბმული CORS პრობლემების თავიდან ასაცილებლად
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
         const MISHNA_STRUCTURE = {
             "ზერაყიმი (זרעים)": {
@@ -132,7 +133,7 @@
                 "ქრითოთი (כריתות)": 6,
                 "მეყილა (מעילה)": 6,
                 "თამიდი (თמיד)": 7,
-                "მიდოთი (מידות)": 5,
+                "მიדოთი (מידות)": 5,
                 "კინემი (קינים)": 3
             },
             "ტაჰაროთი (טהרות)": {
@@ -163,39 +164,78 @@
                       .trim();
         }
 
+        // CSV-ის პარსერი ბრჭყალებისა და მრავალსტრიქონიანი ტექსტების დასამუშავებლად
+        function parseCSV(text) {
+            const lines = [];
+            let row = [];
+            let inQuotes = false;
+            let currentStr = '';
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentStr += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    row.push(currentStr.trim());
+                    currentStr = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (char === '\r' && nextChar === '\n') i++;
+                    row.push(currentStr.trim());
+                    if (row.length > 1 || row[0] !== '') lines.push(row);
+                    row = [];
+                    currentStr = '';
+                } else {
+                    currentStr += char;
+                }
+            }
+            if (row.length > 0 || currentStr !== '') {
+                row.push(currentStr.trim());
+                lines.push(row);
+            }
+            return lines;
+        }
+
         async function fetchMishnaData() {
             try {
                 const response = await fetch(SHEET_URL);
-                const text = await response.text();
+                if (!response.ok) throw new Error('Network response was not ok');
+                const csvText = await response.text();
                 
-                const json = JSON.parse(text.substr(47).slice(0, -2));
-                const rows = json.table.rows;
-
+                const rows = parseCSV(csvText);
                 allMishnayot = [];
 
-                rows.forEach((row, index) => {
-                    const data = row.c;
-                    if (!data || !data[0]) return; 
+                // გამოვტოვოთ პირველი სათაურების სტრიქონი (Header)
+                for (let i = 1; i < rows.length; i++) {
+                    const data = rows[i];
+                    if (!data || !data[0]) continue; 
 
                     allMishnayot.push({
-                        id: index,
-                        seder: (data[1]?.v || '').toString().trim(),
-                        masekhet: (data[2]?.v || '').toString().trim(),
-                        perek: (data[3]?.v || '').toString().trim(),
-                        mishna: (data[4]?.v || '').toString().trim(),
-                        hebrew: data[5]?.v || '',
-                        transliteration: data[6]?.v || '',
-                        georgian: data[7]?.v || '',
-                        kehati: data[8]?.v || '',
-                        bartenura: data[9]?.v || ''
+                        id: i,
+                        seder: (data[1] || '').trim(),
+                        masekhet: (data[2] || '').trim(),
+                        perek: (data[3] || '').trim(),
+                        mishna: (data[4] || '').trim(),
+                        hebrew: data[5] || '',
+                        transliteration: data[6] || '',
+                        georgian: data[7] || '',
+                        kehati: data[8] || '',
+                        bartenura: data[9] || ''
                     });
-                });
+                }
 
                 populateSederDropdown();
                 renderMishnayot(allMishnayot);
             } catch (error) {
                 document.getElementById('loading').innerHTML = `
-                    <p class="text-red-500 font-bold">შეცდომა მონაცემების ჩატვირთვისას!</p>
+                    <p class="text-red-500 font-bold mb-2">შეცდომა მონაცემების ჩატვირთვისას!</p>
+                    <p class="text-xs text-slate-500">გთხოვთ შეამოწმოთ, რომ Google Sheet-ი საჯაროდ არის გაზიარებული ("Anyone with the link").</p>
                 `;
             }
         }
@@ -407,57 +447,4 @@
 
         function escapeQuotes(str) {
             if (!str) return '';
-            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
-        }
-
-        function speakText(text, lang) {
-            if (!('speechSynthesis' in window)) {
-                alert('თქვენს ბრაუზერს არ აქვს ხმოვანი წაკითხვის მხარდაჭერა.');
-                return;
-            }
-
-            if (window.speechSynthesis.speaking && currentlySpeakingText === text) {
-                stopSpeech();
-                return;
-            }
-
-            stopSpeech();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            utterance.rate = 0.9; // ცოტათი ნელი და მკაფიო ტემპი
-
-            currentlySpeakingText = text;
-
-            utterance.onend = () => {
-                currentlySpeakingText = null;
-            };
-
-            utterance.onerror = () => {
-                currentlySpeakingText = null;
-            };
-
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function stopSpeech() {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-            currentlySpeakingText = null;
-        }
-
-        function showDailyMishna() {
-            stopSpeech();
-            if (allMishnayot.length === 0) return;
-
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 0);
-            const diff = now - startOfYear;
-            const oneDay = 1000 * 60 * 60 * 24;
-            const dayOfYear = Math.floor(diff / oneDay);
-
-            const dailyIndex = dayOfYear % allMishnayot.length;
-            const dailyMishna = allMishnayot[dailyIndex];
-
-            renderMishnayot([
+            return str.replace(/'/g, "\\'").replace(/"
