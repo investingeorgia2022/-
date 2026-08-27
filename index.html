@@ -79,7 +79,7 @@
         </div>
 
         <!-- მიშნების სია -->
-        <div id="app" class="space-y-6 touch-pan-y">
+        <div id="app" class="space-y-6">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
                 <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
@@ -96,18 +96,18 @@
     const MISHNA_STRUCTURE = {
         "ზერაყიმი (זרעים)": { 
             "ბერახოთი (ברכות)": { 1: 5, 2: 8, 3: 6, 4: 7, 5: 5, 6: 8, 7: 5, 8: 8, 9: 5 },
-            "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითי (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
+            "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
         },
         "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
         "ნაშიმი (נשים)": { "იევამოთי (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
-        "ნეזიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთי (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთי (אבות)": 6, "ჰორაიოთי (הוריות)": 3 },
-        "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
-        "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიמי (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+        "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედריნი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთי (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+        "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოроთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
+        "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
     };
 
     let allMishnayot = [];
-    let currentDisplayedList = [];
     let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
+    let currentAudio = null;
 
     function updateFontScale() {
         document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -131,9 +131,7 @@
     function cleanString(str) {
         if (!str) return '';
         return str.toString().replace(/\(.*\)/g, '').replace(/[\u0590-\u05FF]/g, '').toLowerCase().trim();
-    }
-
-    function parseCSV(text) {
+    }    function parseCSV(text) {
         const lines = [];
         let row = [];
         let inQuotes = false;
@@ -164,7 +162,9 @@
             lines.push(row);
         }
         return lines;
-    }    async function fetchMishnaData() {
+    }
+
+    async function fetchMishnaData() {
         let csvText = '';
         try {
             const controller = new AbortController();
@@ -381,7 +381,6 @@
     }
 
     function renderMishnayot(list, isDaily = false) {
-        currentDisplayedList = list;
         const app = document.getElementById('app');
         app.innerHTML = ''; 
 
@@ -399,28 +398,9 @@
         list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
     }
 
-    function escapeQuotes(str) {
-        if (!str) return '';
-        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
-
-    function stopSpeech() {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-    }
-
-    function speakText(text, lang) {
-        if (!('speechSynthesis' in window)) return;
-        stopSpeech();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === 'he' ? 'he-IL' : 'ka-GE';
-        window.speechSynthesis.speak(utterance);
-    }
-
     function createMishnaCard(item, isDaily) {
         const card = document.createElement('div');
-        card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative transition-all duration-300`;
+        card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
         
         card.innerHTML = `
             ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
@@ -473,63 +453,23 @@
         return card;
     }
 
-    // --- თითის გასმის (SWIPE) ლოგიკა მომდევნო / წინა მიშნაზე გადასასვლელად ---
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
+    function escapeQuotes(str) {
+        if (!str) return '';
+        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
 
-    const appContainer = document.getElementById('app');
-
-    appContainer.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
-
-    appContainer.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        touchEndY = e.changedTouches[0].screenY;
-        handleSwipe();
-    }, { passive: true });
-
-    function handleSwipe() {
-        const xDiff = touchEndX - touchStartX;
-        const yDiff = touchEndY - touchStartY;
-
-        // ვამოწმებთ, რომ ჰორიზონტალური გასმა იყოს უფრო ძლიერი, ვიდრე ვერტიკალური სქროლი
-        if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > 50) {
-            if (xDiff < 0) {
-                // მარცხნივ გასმა (Swipe Left) -> მომდევნო მიშნა
-                navigateToNextMishna();
-            } else {
-                // მარჯვნივ გასმა (Swipe Right) -> წინა მიშნა
-                navigateToPrevMishna();
-            }
+    function stopSpeech() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
         }
     }
 
-    function navigateToNextMishna() {
-        const mishnaSelect = document.getElementById('mishnaSelect');
-        if (mishnaSelect && !mishnaSelect.disabled && mishnaSelect.value) {
-            let nextVal = parseInt(mishnaSelect.value) + 1;
-            if (mishnaSelect.querySelector(`option[value="${nextVal}"]`)) {
-                mishnaSelect.value = nextVal;
-                onMishnaChange();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-    }
-
-    function navigateToPrevMishna() {
-        const mishnaSelect = document.getElementById('mishnaSelect');
-        if (mishnaSelect && !mishnaSelect.disabled && mishnaSelect.value) {
-            let prevVal = parseInt(mishnaSelect.value) - 1;
-            if (prevVal >= 1 && mishnaSelect.querySelector(`option[value="${prevVal}"]`)) {
-                mishnaSelect.value = prevVal;
-                onMishnaChange();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
+    function speakText(text, lang) {
+        if (!('speechSynthesis' in window)) return;
+        stopSpeech();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang === 'he' ? 'he-IL' : 'ka-GE';
+        window.speechSynthesis.speak(utterance);
     }
 
     function showDailyMishna() {
