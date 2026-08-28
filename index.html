@@ -11,13 +11,11 @@
         .dynamic-text-trans { font-size: calc(0.75rem * var(--text-scale, 1)); }
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
         
-        /* მენიუს გლუვი და უცაბედი დამალვა/გამოჩენა */
         #stickyHeader {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             will-change: transform;
         }
         
-        /* ეკრანის ზემოთ სრულად გაყვანა */
         .header-hidden {
             transform: translateY(-150%) !important;
         }
@@ -27,16 +25,14 @@
 
     <div class="max-w-xl mx-auto space-y-4">
         
-        <!-- მართვისა და ფილტრების ბლოკი (Fixed პოზიციონირებით) -->
+        <!-- მართვისა და ფილტრების ბლოკი -->
         <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 fixed top-2 left-4 right-4 max-w-xl mx-auto z-50">
             
-            <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
             <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
                 <span class="text-blue-600 font-extrabold text-xs">📍</span>
                 <span id="currentMishnaText" class="text-xs font-bold text-blue-900 truncate">აირჩიეთ ან ჩამოქაჩეთ მიშნა...</span>
             </div>
 
-            <!-- ძიება და ფონტის მართვა -->
             <div class="flex gap-2">
                 <div class="relative flex-1">
                     <input 
@@ -48,7 +44,6 @@
                     >
                 </div>
 
-                <!-- ფონტის ზომის მართვის ღილაკები -->
                 <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-300 gap-1">
                     <button onclick="changeFontSize(-0.1)" title="ფონტის შემცირება" class="w-7 h-7 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A-</button>
                     <button onclick="resetFontSize()" id="fontSizeLabel" title="ზომის ჩამოყრა" class="px-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 transition">100%</button>
@@ -56,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- ფილტრები -->
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <select id="sederSelect" onchange="onSederChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold">
                     <option value="">ყველა სედერი</option>
@@ -75,7 +69,6 @@
                 </select>
             </div>
 
-            <!-- ღილაკები -->
             <div class="flex gap-2">
                 <button 
                     onclick="showDailyMishna()" 
@@ -95,7 +88,6 @@
             </div>
         </div>
 
-        <!-- მიშნების სია -->
         <div id="app" class="space-y-6 pt-2">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
@@ -447,7 +439,7 @@ function createMishnaCard(item, isDaily) {
 
         <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიגინალი)</span>
+                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
                 <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
@@ -587,7 +579,9 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
-// ზუსტი ლოგიკა: ზემოთ ასქროლვისას იმალება, ქვემოთ ასქროლვისას გამოდის
+// სწორი სქროლის ლოგიკა:
+// 1. ტექსტის ქვემოთ ჩასვლა (diff > 5) -> მენიუ იმალება.
+// 2. ტექსტის ზემოთ ამოწევა (diff < -5) -> მენიუ ჩამოდის.
 let lastScrollY = window.scrollY;
 
 window.addEventListener('scroll', () => {
@@ -595,16 +589,13 @@ window.addEventListener('scroll', () => {
     const header = document.getElementById('stickyHeader');
     const diff = currentScrollY - lastScrollY;
 
-    // გვერდის სულ ზედა ნაწილში მენიუ ყოველთვის გამოჩენილია
     if (currentScrollY <= 20) {
         header.classList.remove('header-hidden');
     } 
-    // ზემოთ ასქროლვა (diff < -5) -> მენიუ მომენტალურად იმალება
-    else if (diff < -5) {
+    else if (diff > 5) { // ჩასვლა -> მენიუ იმალება
         header.classList.add('header-hidden');
     } 
-    // ქვემოთ ჩამოსქროლვა (diff > 5) -> მენიუ ჩამოდის ჩვეულებრივად
-    else if (diff > 5) {
+    else if (diff < -5) { // ამოწევა -> მენიუ ჩამოდის
         header.classList.remove('header-hidden');
     }
 
@@ -634,7 +625,7 @@ function switchTab(id, tab) {
         kehatiContent.classList.remove('hidden');
         bartenuraContent.classList.add('hidden');
         kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
+        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
     }
 }
 
