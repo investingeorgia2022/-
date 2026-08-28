@@ -62,7 +62,7 @@
                     <button onclick="cycleTheme()" id="themeBtn" title="თემა (Light/Dark/OLED)" class="w-8 h-8 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs shadow-sm transition flex items-center justify-center">🌓</button>
                 </div>
             </div>
-                      <div class="flex gap-2">
+                        <div class="flex gap-2">
                 <div class="relative flex-1">
                     <input 
                         type="text" 
@@ -159,7 +159,7 @@ const MISHNA_STRUCTURE = {
     "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (მנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (თამიდ)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
     "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქצინი (עוקצין)": 3 }
 };
-   let allMishnayot = [];
+     let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
 let isUpdatingFromScroll = false;
@@ -300,8 +300,19 @@ async function fetchMishnaData() {
     populateSederDropdown();
     updateProgressAndStats();
     renderMishnayot(allMishnayot);
-}
-    function updateProgressAndStats() {
+
+    // ბოლო ნანახი ადგილის აღდგენა საიტიდან გასვლის შემდეგ
+    const savedLastId = localStorage.getItem('mishnaLastId');
+    if (savedLastId) {
+        const targetCard = document.querySelector(`.mishna-card[data-id="${savedLastId}"]`);
+        if (targetCard) {
+            setTimeout(() => {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+    }
+        }
+       function updateProgressAndStats() {
     const totalCount = allMishnayot.length;
     const readCount = readHistory.length;
     const percent = totalCount > 0 ? Math.round((readCount / totalCount) * 100) : 0;
@@ -647,6 +658,12 @@ function updateActiveMishnaOnScroll() {
         const masekhet = currentCard.getAttribute('data-masekhet');
         const perek = currentCard.getAttribute('data-perek');
         const mishna = currentCard.getAttribute('data-mishna');
+        const cardId = currentCard.getAttribute('data-id');
+
+        // ბოლო ნანახი მიშნის ID-ს შენახვა ლოკალურ მეხსიერებაში
+        if (cardId) {
+            localStorage.setItem('mishnaLastId', cardId);
+        }
 
         document.getElementById('currentMishnaText').innerText = `${seder} • ტრაქტატი ${masekhet} • თავი ${perek} • მიშნა ${mishna}`;
 
