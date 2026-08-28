@@ -231,7 +231,7 @@ async function fetchMishnaData() {
     populateSederDropdown();
     renderMishnayot(allMishnayot);
 }
-    function populateSederDropdown() {
+   function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -439,7 +439,7 @@ function createMishnaCard(item, isDaily) {
 
         <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+                <span class="text-[10px] font-bold text-amber-700">מקור (וריგინალი)</span>
                 <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
@@ -545,7 +545,7 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
         const masekhtot = Object.keys(MISHNA_STRUCTURE[seder]);
         masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
         masekhtot.forEach(m => {
-            masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
+            masekhetSelect.innerHTML += `<option value="${m}">${m}">${m}</option>`;
         });
         masekhetSelect.disabled = false;
         masekhetSelect.value = masekhet;
@@ -579,27 +579,36 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
-// სწორი სქროლის ლოგიკა:
-// 1. ტექსტის ქვემოთ ჩასვლა (diff > 5) -> მენიუ იმალება.
-// 2. ტექსტის ზემოთ ამოწევა (diff < -5) -> მენიუ ჩამოდის.
+// 🎯 განახლებული სწრაფი სქროლის ლოგიკა:
 let lastScrollY = window.scrollY;
+let lastScrollTime = Date.now();
 
 window.addEventListener('scroll', () => {
     const currentScrollY = window.scrollY;
+    const currentTime = Date.now();
+    
     const header = document.getElementById('stickyHeader');
-    const diff = currentScrollY - lastScrollY;
+    const diffY = currentScrollY - lastScrollY;
+    const diffTime = currentTime - lastScrollTime;
 
+    // გამოვთვლით სქროლის სიჩქარეს (პიქსელები / მილიწამზე)
+    const speed = diffTime > 0 ? (diffY / diffTime) : 0;
+
+    // 1. გვერდის ყველაზე ზედა ნაწილში (Top 20px) მენიუ ყოველთვის ჩამოსულია
     if (currentScrollY <= 20) {
         header.classList.remove('header-hidden');
     } 
-    else if (diff > 5) { // ჩასვლა -> მენიუ იმალება
+    // 2. ქვემოთ ჩასვლა (ტექსტის კითხვა): ოდნავ ჩასვლისასაც მენიუ ნელ-ნელა იმალება, რომ ტექსტი გამოჩნდეს
+    else if (diffY > 10) {
         header.classList.add('header-hidden');
     } 
-    else if (diff < -5) { // ამოწევა -> მენიუ ჩამოდის
+    // 3. მხოლოდ **სწრაფად** ჩამოქაჩვისას (Speed < -0.8 ან 25px-ზე მეტი ერთბაშად ამოწევა) მენიუ ჩამოდის!
+    else if (diffY < -25 || speed < -0.8) {
         header.classList.remove('header-hidden');
     }
 
     lastScrollY = currentScrollY;
+    lastScrollTime = currentTime;
 
     if (!isScrolling) {
         window.requestAnimationFrame(() => {
@@ -625,7 +634,7 @@ function switchTab(id, tab) {
         kehatiContent.classList.remove('hidden');
         bartenuraContent.classList.add('hidden');
         kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
+        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
     }
 }
 
