@@ -10,14 +10,24 @@
         .dynamic-text-georgian { font-size: calc(0.875rem * var(--text-scale, 1)); }
         .dynamic-text-trans { font-size: calc(0.75rem * var(--text-scale, 1)); }
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
+        
+        /* ანიმაცია სტატიკური ნაწილის აკეცვა-ჩამოშლისთვის */
+        #headerContainer {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .header-hidden {
+            transform: translateY(-120%);
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-slate-100 h-screen overflow-hidden font-sans flex flex-col">
 
     <div class="max-w-xl w-full mx-auto h-full flex flex-col p-4">
         
-        <!-- უძრავი/სტატიკური მართვის ბლოკი -->
-        <div class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 shrink-0 mb-4 z-10">
+        <!-- აკეცვადი და ჩამოშლადი მართვის ბლოკი -->
+        <div id="headerContainer" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 shrink-0 mb-4 z-10">
             
             <!-- ძიება და ფონტის მართვა -->
             <div class="flex gap-2">
@@ -78,7 +88,7 @@
             </div>
         </div>
 
-        <!-- მიშნების სქროლვადი სია (მხოლოდ ეს ნაწილი ჩადის/ამოდის) -->
+        <!-- მიშნების სქროლვადი სია -->
         <div id="app" class="flex-1 overflow-y-auto pr-1 space-y-6">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
@@ -98,11 +108,11 @@
             "ბერახოთი (ברכות)": { 1: 5, 2: 8, 3: 6, 4: 7, 5: 5, 6: 8, 7: 5, 8: 8, 9: 5 },
             "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
         },
-        "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
-        "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
-        "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
-        "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოроთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
-        "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשיრიן)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+        "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (შკלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
+        "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (ნזיר)": 9, "სოტა (სוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
+        "ნეზიკინი (ნזיקין)": { "ბავა კამა (ბבא קמא)": 10, "ბავა მეციყა (ბבא מציעא)": 10, "ბავა ბათრა (ბבא בתרא)": 10, "სანჰედრინი (סנהדრიן)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+        "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოроთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (თמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
+        "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიმი (ზבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
     };
 
     let allMishnayot = [];
@@ -130,7 +140,8 @@
     function cleanString(str) {
         if (!str) return '';
         return str.toString().replace(/\(.*\)/g, '').replace(/[\u0590-\u05FF]/g, '').toLowerCase().trim();
-    }    function parseCSV(text) {
+    }
+        function parseCSV(text) {
         const lines = [];
         let row = [];
         let inQuotes = false;
@@ -397,10 +408,37 @@
         list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
     }
 
+    function switchTab(cardId, tabName) {
+        const kehatiTab = document.getElementById(`tab-kehati-${cardId}`);
+        const bartenuraTab = document.getElementById(`tab-bartenura-${cardId}`);
+        const kehatiContent = document.getElementById(`content-kehati-${cardId}`);
+        const bartenuraContent = document.getElementById(`content-bartenura-${cardId}`);
+
+        if (tabName === 'kehati') {
+            kehatiTab?.classList.add('border-emerald-500', 'text-emerald-700', 'font-bold');
+            kehatiTab?.classList.remove('border-transparent', 'text-slate-500');
+            bartenuraTab?.classList.remove('border-purple-500', 'text-purple-700', 'font-bold');
+            bartenuraTab?.classList.add('border-transparent', 'text-slate-500');
+            
+            if (kehatiContent) kehatiContent.style.display = 'block';
+            if (bartenuraContent) bartenuraContent.style.display = 'none';
+        } else {
+            bartenuraTab?.classList.add('border-purple-500', 'text-purple-700', 'font-bold');
+            bartenuraTab?.classList.remove('border-transparent', 'text-slate-500');
+            kehatiTab?.classList.remove('border-emerald-500', 'text-emerald-700', 'font-bold');
+            kehatiTab?.classList.add('border-transparent', 'text-slate-500');
+
+            if (bartenuraContent) bartenuraContent.style.display = 'block';
+            if (kehatiContent) kehatiContent.style.display = 'none';
+        }
+    }
+
     function createMishnaCard(item, isDaily) {
         const card = document.createElement('div');
         card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
         
+        const hasCommentary = item.kehati || item.bartenura;
+
         card.innerHTML = `
             ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
 
@@ -435,18 +473,31 @@
                 <p class="dynamic-text-georgian text-slate-800 font-medium leading-relaxed">${item.georgian}</p>
             </div>` : ''}
 
-            <!-- კეჰათი -->
-            ${item.kehati ? `
-            <div class="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
-                <span class="text-[10px] font-bold text-emerald-700 uppercase block mb-1">კეჰათის განმარტება</span>
-                <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.kehati}</p>
-            </div>` : ''}
+            <!-- განმარტებების ტაბები -->
+            ${hasCommentary ? `
+            <div class="mt-4 border-t border-slate-100 pt-3">
+                <div class="flex border-b border-slate-200 mb-3 gap-2">
+                    ${item.kehati ? `
+                    <button id="tab-kehati-${item.id}" onclick="switchTab(${item.id}, 'kehati')" class="pb-2 px-3 text-xs border-b-2 border-emerald-500 text-emerald-700 font-bold transition">
+                        კეჰათი
+                    </button>` : ''}
+                    ${item.bartenura ? `
+                    <button id="tab-bartenura-${item.id}" onclick="switchTab(${item.id}, 'bartenura')" class="pb-2 px-3 text-xs border-b-2 ${!item.kehati ? 'border-purple-500 text-purple-700 font-bold' : 'border-transparent text-slate-500'} transition">
+                        ბარტანურა
+                    </button>` : ''}
+                </div>
 
-            <!-- ბარტანურა -->
-            ${item.bartenura ? `
-            <div class="bg-purple-50/50 border-l-4 border-purple-500 p-4 rounded-xl mb-3">
-                <span class="text-[10px] font-bold text-purple-700 uppercase block mb-1">ბარტანურას განმარტება</span>
-                <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.bartenura}</p>
+                ${item.kehati ? `
+                <div id="content-kehati-${item.id}" class="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
+                    <span class="text-[10px] font-bold text-emerald-700 uppercase block mb-1">კეჰათის განმარტება</span>
+                    <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.kehati}</p>
+                </div>` : ''}
+
+                ${item.bartenura ? `
+                <div id="content-bartenura-${item.id}" class="bg-purple-50/50 border-l-4 border-purple-500 p-4 rounded-xl mb-3" style="display: ${item.kehati ? 'none' : 'block'};">
+                    <span class="text-[10px] font-bold text-purple-700 uppercase block mb-1">ბარტანურას განმარტება</span>
+                    <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.bartenura}</p>
+                </div>` : ''}
             </div>` : ''}
         `;
         return card;
@@ -479,6 +530,24 @@
         renderMishnayot([allMishnayot[index]], true);
     }
 
+    // სქროლვის ლოგიკა (ზემოთ სქროლვისას ჩმოშლა, ქვემოთ სქროლვისას აკეცვა)
+    let lastScrollTop = 0;
+    const appContainer = document.getElementById('app');
+    const headerContainer = document.getElementById('headerContainer');
+
+    appContainer.addEventListener('scroll', () => {
+        let currentScroll = appContainer.scrollTop;
+
+        if (currentScroll > lastScrollTop && currentScroll > 50) {
+            // ქვევით სქროლვა -> აკეცვა
+            headerContainer.classList.add('header-hidden');
+        } else {
+            // ზევით სქროლვა -> ჩამოშლა
+            headerContainer.classList.remove('header-hidden');
+        }
+        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+    });
+
     window.onload = () => {
         updateFontScale();
         fetchMishnaData();
@@ -486,5 +555,3 @@
     </script>
 </body>
 </html>
-
-        
