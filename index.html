@@ -12,12 +12,12 @@
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-4 font-sans">
+<body class="bg-slate-100 h-screen overflow-hidden font-sans flex flex-col">
 
-    <div class="max-w-xl mx-auto space-y-4">
+    <div class="max-w-xl w-full mx-auto h-full flex flex-col p-4">
         
-        <!-- მართვისა და ფილტრების ბლოკი -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <!-- უძრავი/სტატიკური მართვის ბლოკი -->
+        <div class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 shrink-0 mb-4 z-10">
             
             <!-- ძიება და ფონტის მართვა -->
             <div class="flex gap-2">
@@ -78,8 +78,8 @@
             </div>
         </div>
 
-        <!-- მიშნების სია -->
-        <div id="app" class="space-y-6">
+        <!-- მიშნების სქროლვადი სია (მხოლოდ ეს ნაწილი ჩადის/ამოდის) -->
+        <div id="app" class="flex-1 overflow-y-auto pr-1 space-y-6">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
                 <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
@@ -89,469 +89,402 @@
     </div>
 
     <script>
-const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
-const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-const PROXY_URL = `https://corsproxy.io/?${encodeURIComponent(DIRECT_CSV_URL)}`;
+    const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
+    const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    const PROXY_URL = `https://corsproxy.io/?${encodeURIComponent(DIRECT_CSV_URL)}`;
 
-const MISHNA_STRUCTURE = {
-    "ზერაყიმი (זרעים)": { 
-        "ბერახოთი (ברכות)": { 1: 5, 2: 8, 3: 6, 4: 7, 5: 5, 6: 8, 7: 5, 8: 8, 9: 5 },
-        "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
-    },
-    "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
-    "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
-    "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
-    "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
-    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
-};
+    const MISHNA_STRUCTURE = {
+        "ზერაყიმი (זרעים)": { 
+            "ბერახოთი (ברכות)": { 1: 5, 2: 8, 3: 6, 4: 7, 5: 5, 6: 8, 7: 5, 8: 8, 9: 5 },
+            "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
+        },
+        "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
+        "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
+        "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+        "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოроთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
+        "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשיრიן)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+    };
 
-let allMishnayot = [];
-let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
-let currentAudio = null;
+    let allMishnayot = [];
+    let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 
-function updateFontScale() {
-    document.documentElement.style.setProperty('--text-scale', fontScale);
-    document.getElementById('fontSizeLabel').innerText = `${Math.round(fontScale * 100)}%`;
-    localStorage.setItem('mishnaFontScale', fontScale);
-}
+    function updateFontScale() {
+        document.documentElement.style.setProperty('--text-scale', fontScale);
+        document.getElementById('fontSizeLabel').innerText = `${Math.round(fontScale * 100)}%`;
+        localStorage.setItem('mishnaFontScale', fontScale);
+    }
 
-function changeFontSize(delta) {
-    const newScale = fontScale + delta;
-    if (newScale >= 0.7 && newScale <= 1.8) {
-        fontScale = parseFloat(newScale.toFixed(1));
+    function changeFontSize(delta) {
+        const newScale = fontScale + delta;
+        if (newScale >= 0.7 && newScale <= 1.8) {
+            fontScale = parseFloat(newScale.toFixed(1));
+            updateFontScale();
+        }
+    }
+
+    function resetFontSize() {
+        fontScale = 1;
         updateFontScale();
     }
-}
 
-function resetFontSize() {
-    fontScale = 1;
-    updateFontScale();
-}
+    function cleanString(str) {
+        if (!str) return '';
+        return str.toString().replace(/\(.*\)/g, '').replace(/[\u0590-\u05FF]/g, '').toLowerCase().trim();
+    }    function parseCSV(text) {
+        const lines = [];
+        let row = [];
+        let inQuotes = false;
+        let currentStr = '';
 
-function cleanString(str) {
-    if (!str) return '';
-    return str.toString()
-        .replace(/[\u0591-\u05C7]/g, '')
-        .toLowerCase()
-        .trim();
-}
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
 
-function parseCSV(text) {
-    const lines = [];
-    let row = [];
-    let inQuotes = false;
-    let currentStr = '';
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-
-        if (char === '"') {
-            if (inQuotes && nextChar === '"') { currentStr += '"'; i++; } 
-            else { inQuotes = !inQuotes; }
-        } else if (char === ',' && !inQuotes) {
-            row.push(currentStr.trim());
-            currentStr = '';
-        } else if ((char === '\r' || char === '\n') && !inQuotes) {
-            if (char === '\r' && nextChar === '\n') i++;
-            row.push(currentStr.trim());
-            if (row.length > 1 || row[0] !== '') lines.push(row);
-            row = [];
-            currentStr = '';
-        } else {
-            currentStr += char;
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') { currentStr += '"'; i++; } 
+                else { inQuotes = !inQuotes; }
+            } else if (char === ',' && !inQuotes) {
+                row.push(currentStr.trim());
+                currentStr = '';
+            } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                if (char === '\r' && nextChar === '\n') i++;
+                row.push(currentStr.trim());
+                if (row.length > 1 || row[0] !== '') lines.push(row);
+                row = [];
+                currentStr = '';
+            } else {
+                currentStr += char;
+            }
         }
+        if (row.length > 0 || currentStr !== '') {
+            row.push(currentStr.trim());
+            lines.push(row);
+        }
+        return lines;
     }
-    if (row.length > 0 || currentStr !== '') {
-        row.push(currentStr.trim());
-        lines.push(row);
-    }
-    return lines;
-}
 
-async function fetchMishnaData() {
-    let csvText = '';
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
-        const response = await fetch(PROXY_URL, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (response.ok) csvText = await response.text();
-    } catch (e) {}
-
-    if (!csvText) {
+    async function fetchMishnaData() {
+        let csvText = '';
         try {
-            const response = await fetch(DIRECT_CSV_URL);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const response = await fetch(PROXY_URL, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (response.ok) csvText = await response.text();
         } catch (e) {}
+
+        if (!csvText) {
+            try {
+                const response = await fetch(DIRECT_CSV_URL);
+                if (response.ok) csvText = await response.text();
+            } catch (e) {}
+        }
+
+        if (!csvText) {
+            document.getElementById('loading').innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+                    <p class="font-bold mb-1">⚠️ მონაცემები ვერ ჩაიტვირთა</p>
+                    <p class="text-xs">შეამოწმეთ ინტერნეტ კავშირი ან Google Sheet-ის წვდომა.</p>
+                    <button onclick="fetchMishnaData()" class="mt-3 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">↻ ხელახლა ცდა</button>
+                </div>
+            `;
+            return;
+        }
+
+        const rows = parseCSV(csvText);
+        allMishnayot = [];
+
+        for (let i = 1; i < rows.length; i++) {
+            const data = rows[i];
+            if (!data || !data[0]) continue; 
+
+            allMishnayot.push({
+                id: i,
+                seder: (data[1] || '').trim(),
+                masekhet: (data[2] || '').trim(),
+                perek: (data[3] || '').trim(),
+                mishna: (data[4] || '').trim(),
+                hebrew: data[5] || '',
+                transliteration: data[6] || '',
+                georgian: data[7] || '',
+                kehati: data[8] || '',
+                bartenura: data[9] || ''
+            });
+        }
+
+        populateSederDropdown();
+        renderMishnayot(allMishnayot);
     }
 
-    if (!csvText) {
-        document.getElementById('loading').innerHTML = `
-            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
-                <p class="font-bold mb-1">⚠️ მონაცემები ვერ ჩაიტვირთა</p>
-                <p class="text-xs">შეამოწმეთ ინტერნეტ კავშირი ან Google Sheet-ის წვდომა.</p>
-                <button onclick="fetchMishnaData()" class="mt-3 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">↻ ხელახლა ცდა</button>
-            </div>
-        `;
-        return;
-    }
-
-    const rows = parseCSV(csvText);
-    allMishnayot = [];
-
-    for (let i = 1; i < rows.length; i++) {
-        const data = rows[i];
-        if (!data || !data[0]) continue; 
-
-        allMishnayot.push({
-            id: i,
-            seder: (data[1] || '').trim(),
-            masekhet: (data[2] || '').trim(),
-            perek: (data[3] || '').trim(),
-            mishna: (data[4] || '').trim(),
-            hebrew: data[5] || '',
-            transliteration: data[6] || '',
-            georgian: data[7] || '',
-            kehati: data[8] || '',
-            bartenura: data[9] || ''
+    function populateSederDropdown() {
+        const sederSelect = document.getElementById('sederSelect');
+        sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
+        Object.keys(MISHNA_STRUCTURE).forEach(seder => {
+            sederSelect.innerHTML += `<option value="${seder}">${seder}</option>`;
         });
     }
 
-    populateSederDropdown();
-    renderMishnayot(allMishnayot);
-}
+    function onSederChange() {
+        const selectedSeder = document.getElementById('sederSelect').value;
+        const masekhetSelect = document.getElementById('masekhetSelect');
+        const perekSelect = document.getElementById('perekSelect');
+        const mishnaSelect = document.getElementById('mishnaSelect');
 
-function populateSederDropdown() {
-    const sederSelect = document.getElementById('sederSelect');
-    sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
-    Object.keys(MISHNA_STRUCTURE).forEach(seder => {
-        sederSelect.innerHTML += `<option value="${seder}">${seder}</option>`;
-    });
-}
-
-function onSederChange() {
-    const selectedSeder = document.getElementById('sederSelect').value;
-    const masekhetSelect = document.getElementById('masekhetSelect');
-    const perekSelect = document.getElementById('perekSelect');
-    const mishnaSelect = document.getElementById('mishnaSelect');
-
-    perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
-    perekSelect.disabled = true;
-
-    mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
-    mishnaSelect.disabled = true;
-
-    if (!selectedSeder || !MISHNA_STRUCTURE[selectedSeder]) {
-        masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
-        masekhetSelect.disabled = true;
-        applyFilters();
-        return;
-    }
-
-    const masekhtot = Object.keys(MISHNA_STRUCTURE[selectedSeder]);
-    masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
-    masekhtot.forEach(m => {
-        masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
-    });
-    masekhetSelect.disabled = false;
-    applyFilters();
-}
-
-function onMasekhetChange() {
-    const selectedSeder = document.getElementById('sederSelect').value;
-    const selectedMasekhet = document.getElementById('masekhetSelect').value;
-    const perekSelect = document.getElementById('perekSelect');
-    const mishnaSelect = document.getElementById('mishnaSelect');
-
-    mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
-    mishnaSelect.disabled = true;
-
-    if (!selectedMasekhet || !MISHNA_STRUCTURE[selectedSeder] || !MISHNA_STRUCTURE[selectedSeder][selectedMasekhet]) {
         perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
         perekSelect.disabled = true;
-        applyFilters();
-        return;
-    }
 
-    const masekhetData = MISHNA_STRUCTURE[selectedSeder][selectedMasekhet];
-    perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
-
-    let totalPerakim = typeof masekhetData === 'object' ? Object.keys(masekhetData).length : masekhetData;
-
-    for (let i = 1; i <= totalPerakim; i++) {
-        perekSelect.innerHTML += `<option value="${i}">თავი ${i}</option>`;
-    }
-    perekSelect.disabled = false;
-    applyFilters();
-}
-
-function onPerekChange() {
-    const selectedSeder = document.getElementById('sederSelect').value;
-    const selectedMasekhet = document.getElementById('masekhetSelect').value;
-    const selectedPerek = document.getElementById('perekSelect').value;
-    const mishnaSelect = document.getElementById('mishnaSelect');
-
-    if (!selectedPerek) {
         mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
         mishnaSelect.disabled = true;
-        applyFilters();
-        return;
-    }
 
-    mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+        if (!selectedSeder || !MISHNA_STRUCTURE[selectedSeder]) {
+            masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+            masekhetSelect.disabled = true;
+            applyFilters();
+            return;
+        }
 
-    let availableMishnayot = allMishnayot.filter(m => 
-        cleanString(m.seder).includes(cleanString(selectedSeder)) &&
-        cleanString(m.masekhet).includes(cleanString(selectedMasekhet)) &&
-        m.perek.toString() === selectedPerek.toString()
-    ).map(m => parseInt(m.mishna)).sort((a,b) => a - b);
-
-    let maxMishna = 10;
-    const masekhetData = MISHNA_STRUCTURE[selectedSeder]?.[selectedMasekhet];
-    if (typeof masekhetData === 'object' && masekhetData[selectedPerek]) {
-        maxMishna = masekhetData[selectedPerek];
-    }
-
-    let mishnaCount = Math.max(maxMishna, availableMishnayot.length > 0 ? Math.max(...availableMishnayot) : 0);
-
-    for (let i = 1; i <= mishnaCount; i++) {
-        mishnaSelect.innerHTML += `<option value="${i}">მიშნა ${i}</option>`;
-    }
-
-    mishnaSelect.disabled = false;
-    applyFilters();
-}
-
-function onMishnaChange() { applyFilters(); }
-
-function applyFilters() {
-    stopSpeech();
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    const selectedSeder = document.getElementById('sederSelect').value;
-    const selectedMasekhet = document.getElementById('masekhetSelect').value;
-    const selectedPerek = document.getElementById('perekSelect').value;
-    const selectedMishna = document.getElementById('mishnaSelect').value;
-
-    let filtered = allMishnayot;
-
-    if (selectedSeder) {
-        const cleanSelectedSeder = cleanString(selectedSeder);
-        filtered = filtered.filter(m => cleanString(m.seder).includes(cleanSelectedSeder) || cleanSelectedSeder.includes(cleanString(m.seder)));
-    }
-    if (selectedMasekhet) {
-        const cleanSelectedMasekhet = cleanString(selectedMasekhet);
-        filtered = filtered.filter(m => cleanString(m.masekhet).includes(cleanSelectedMasekhet) || cleanSelectedMasekhet.includes(cleanString(m.masekhet)));
-    }
-    if (selectedPerek) {
-        filtered = filtered.filter(m => m.perek.toString() === selectedPerek.toString());
-    }
-    if (selectedMishna) {
-        filtered = filtered.filter(m => m.mishna.toString() === selectedMishna.toString());
-    }
-
-    if (query) {
-        filtered = filtered.filter(item => 
-            item.georgian.toLowerCase().includes(query) ||
-            item.hebrew.includes(query) ||
-            item.transliteration.toLowerCase().includes(query) ||
-            item.kehati.toLowerCase().includes(query) ||
-            item.bartenura.toLowerCase().includes(query)
-        );
-    }
-
-    renderMishnayot(filtered);
-}
-
-function handleSearch() { applyFilters(); }
-
-function resetFilters() {
-    stopSpeech();
-    document.getElementById('searchInput').value = '';
-    document.getElementById('sederSelect').value = '';
-    
-    const masekhetSelect = document.getElementById('masekhetSelect');
-    masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
-    masekhetSelect.disabled = true;
-
-    const perekSelect = document.getElementById('perekSelect');
-    perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
-    perekSelect.disabled = true;
-
-    const mishnaSelect = document.getElementById('mishnaSelect');
-    mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
-    mishnaSelect.disabled = true;
-
-    renderMishnayot(allMishnayot);
-}
-
-function renderMishnayot(list, isDaily = false) {
-    const app = document.getElementById('app');
-    app.innerHTML = ''; 
-
-    if (list.length === 0) {
-        app.innerHTML = `
-            <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6">
-                <p class="text-3xl mb-2">📚</p>
-                <p class="text-sm font-bold text-slate-700 mb-1">ტექსტი ჯერ არ არის დამატებული</p>
-                <p class="text-xs text-slate-500">ამ არჩეული მიშნის თარგმანი მალე დაემატება ბაზაში.</p>
-            </div>
-        `;
-        return;
-    }
-
-    list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
-}
-
-function createMishnaCard(item, isDaily) {
-    const card = document.createElement('div');
-    card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
-    
-    card.innerHTML = `
-        ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
-
-        <div class="text-center mb-6">
-            <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">${item.seder}</span>
-            <h1 class="text-2xl font-extrabold text-slate-800 mt-1">ტრაქტატი ${item.masekhet}</h1>
-            <p class="text-xs text-slate-500 font-semibold mt-1">თავი ${item.perek} • მიშნა ${item.mishna}</p>
-        </div>
-
-        <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
-                <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
-                    <span>🔊</span> <span>მოსმენა</span>
-                </button>
-            </div>
-            <p class="dynamic-text-hebrew font-serif text-slate-900 leading-relaxed">${item.hebrew}</p>
-        </div>
-
-        ${item.transliteration ? `
-        <div class="bg-slate-50 border-l-4 border-slate-400 p-3 rounded-xl mb-3">
-            <span class="text-[10px] font-bold text-slate-500 block mb-1">ტრანსლიტერაცია</span>
-            <p class="dynamic-text-trans italic text-slate-700 leading-relaxed">${item.transliteration}</p>
-        </div>
-        ` : ''}
-
-        <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6 relative">
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-emerald-700">ქართული თარგმანი</span>
-                <button onclick="speakText('${escapeQuotes(item.georgian)}', 'ka')" class="text-xs bg-emerald-200/60 hover:bg-emerald-300/80 text-emerald-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
-                    <span>🔊</span> <span>მოსმენა</span>
-                </button>
-            </div>
-            <p class="dynamic-text-georgian text-slate-800 leading-relaxed">${item.georgian}</p>
-        </div>
-
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="flex border-b border-slate-200 bg-slate-50">
-                <button onclick="switchTab(${item.id}, 'bartenura')" id="tab-bartenura-${item.id}" class="flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white">
-                    📜 ბარტანურა
-                </button>
-                <button onclick="switchTab(${item.id}, 'kehati')" id="tab-kehati-${item.id}" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600">
-                    📖 კეჰათი
-                </button>
-            </div>
-
-            <div class="p-4 bg-white text-xs leading-relaxed text-slate-600">
-                <div id="content-bartenura-${item.id}">
-                    <div class="flex justify-between items-center mb-2">
-                        <strong class="text-purple-600">რაბი ყოვადია ბარტანურას განმარტება:</strong>
-                        ${item.bartenura ? `<button onclick="speakText('${escapeQuotes(item.bartenura)}', 'ka')" class="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
-                    </div>
-                    <p class="dynamic-text-commentary">${item.bartenura || 'განმარტება არ არის.'}</p>
-                </div>
-
-                <div id="content-kehati-${item.id}" class="hidden">
-                    <div class="flex justify-between items-center mb-2">
-                        <strong class="text-orange-600">რაბინ პინხას კეჰათის განმარტება:</strong>
-                        ${item.kehati ? `<button onclick="speakText('${escapeQuotes(item.kehati)}', 'ka')" class="text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
-                    </div>
-                    <p class="dynamic-text-commentary">${item.kehati || 'განმარტება არ არის.'}</p>
-                </div>
-            </div>
-        </div>
-    `;
-    return card;
-}
-
-function switchTab(id, tab) {
-    const bartenuraContent = document.getElementById(`content-bartenura-${id}`);
-    const kehatiContent = document.getElementById(`content-kehati-${id}`);
-    const bartenuraTab = document.getElementById(`tab-bartenura-${id}`);
-    const kehatiTab = document.getElementById(`tab-kehati-${id}`);
-
-    if (tab === 'bartenura') {
-        bartenuraContent.classList.remove('hidden');
-        kehatiContent.classList.add('hidden');
-        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white";
-        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600";
-    } else {
-        kehatiContent.classList.remove('hidden');
-        bartenuraContent.classList.add('hidden');
-        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
-    }
-}
-
-function escapeQuotes(str) {
-    if (!str) return '';
-    return str
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
-        .replace(/"/g, '&quot;')
-        .replace(/\r?\n|\r/g, ' ');
-}
-
-function speakText(text, lang) {
-    stopSpeech();
-    if (!text) return;
-
-    if (lang === 'he') {
-        const cleanText = text.replace(/[\u0591-\u05C7]/g, "");
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=iw&client=tw-ob`;
-        currentAudio = new Audio(url);
-        currentAudio.play().catch(() => {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.lang = 'he-IL';
-                window.speechSynthesis.speak(utterance);
-            }
+        const masekhtot = Object.keys(MISHNA_STRUCTURE[selectedSeder]);
+        masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+        masekhtot.forEach(m => {
+            masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
         });
-    } else {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ka-GE';
-            utterance.rate = 0.9;
-            
-            const voices = window.speechSynthesis.getVoices();
-            const kaVoice = voices.find(v => v.lang.includes('ka') || v.lang.includes('GE'));
-            if (kaVoice) utterance.voice = kaVoice;
+        masekhetSelect.disabled = false;
+        applyFilters();
+    }
 
-            window.speechSynthesis.speak(utterance);
+    function onMasekhetChange() {
+        const selectedSeder = document.getElementById('sederSelect').value;
+        const selectedMasekhet = document.getElementById('masekhetSelect').value;
+        const perekSelect = document.getElementById('perekSelect');
+        const mishnaSelect = document.getElementById('mishnaSelect');
+
+        mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+        mishnaSelect.disabled = true;
+
+        if (!selectedMasekhet || !MISHNA_STRUCTURE[selectedSeder] || !MISHNA_STRUCTURE[selectedSeder][selectedMasekhet]) {
+            perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+            perekSelect.disabled = true;
+            applyFilters();
+            return;
+        }
+
+        const masekhetData = MISHNA_STRUCTURE[selectedSeder][selectedMasekhet];
+        perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+
+        let totalPerakim = typeof masekhetData === 'object' ? Object.keys(masekhetData).length : masekhetData;
+
+        for (let i = 1; i <= totalPerakim; i++) {
+            perekSelect.innerHTML += `<option value="${i}">თავი ${i}</option>`;
+        }
+        perekSelect.disabled = false;
+        applyFilters();
+    }
+
+    function onPerekChange() {
+        const selectedSeder = document.getElementById('sederSelect').value;
+        const selectedMasekhet = document.getElementById('masekhetSelect').value;
+        const selectedPerek = document.getElementById('perekSelect').value;
+        const mishnaSelect = document.getElementById('mishnaSelect');
+
+        if (!selectedPerek) {
+            mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+            mishnaSelect.disabled = true;
+            applyFilters();
+            return;
+        }
+
+        mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+
+        let availableMishnayot = allMishnayot.filter(m => 
+            cleanString(m.seder).includes(cleanString(selectedSeder)) &&
+            cleanString(m.masekhet).includes(cleanString(selectedMasekhet)) &&
+            m.perek.toString() === selectedPerek.toString()
+        ).map(m => parseInt(m.mishna)).sort((a,b) => a - b);
+
+        let maxMishna = 10;
+        const masekhetData = MISHNA_STRUCTURE[selectedSeder]?.[selectedMasekhet];
+        if (typeof masekhetData === 'object' && masekhetData[selectedPerek]) {
+            maxMishna = masekhetData[selectedPerek];
+        }
+
+        let mishnaCount = Math.max(maxMishna, availableMishnayot.length > 0 ? Math.max(...availableMishnayot) : 0);
+
+        for (let i = 1; i <= mishnaCount; i++) {
+            mishnaSelect.innerHTML += `<option value="${i}">მიშნა ${i}</option>`;
+        }
+
+        mishnaSelect.disabled = false;
+        applyFilters();
+    }
+
+    function onMishnaChange() { applyFilters(); }
+
+    function applyFilters() {
+        stopSpeech();
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const selectedSeder = document.getElementById('sederSelect').value;
+        const selectedMasekhet = document.getElementById('masekhetSelect').value;
+        const selectedPerek = document.getElementById('perekSelect').value;
+        const selectedMishna = document.getElementById('mishnaSelect').value;
+
+        let filtered = allMishnayot;
+
+        if (selectedSeder) {
+            const cleanSelectedSeder = cleanString(selectedSeder);
+            filtered = filtered.filter(m => cleanString(m.seder).includes(cleanSelectedSeder) || cleanSelectedSeder.includes(cleanString(m.seder)));
+        }
+        if (selectedMasekhet) {
+            const cleanSelectedMasekhet = cleanString(selectedMasekhet);
+            filtered = filtered.filter(m => cleanString(m.masekhet).includes(cleanSelectedMasekhet) || cleanSelectedMasekhet.includes(cleanString(m.masekhet)));
+        }
+        if (selectedPerek) {
+            filtered = filtered.filter(m => m.perek.toString() === selectedPerek.toString());
+        }
+        if (selectedMishna) {
+            filtered = filtered.filter(m => m.mishna.toString() === selectedMishna.toString());
+        }
+
+        if (query) {
+            filtered = filtered.filter(item => 
+                item.georgian.toLowerCase().includes(query) ||
+                item.hebrew.includes(query) ||
+                item.transliteration.toLowerCase().includes(query) ||
+                item.kehati.toLowerCase().includes(query) ||
+                item.bartenura.toLowerCase().includes(query)
+            );
+        }
+
+        renderMishnayot(filtered);
+    }
+
+    function handleSearch() { applyFilters(); }
+
+    function resetFilters() {
+        stopSpeech();
+        document.getElementById('searchInput').value = '';
+        document.getElementById('sederSelect').value = '';
+        
+        const masekhetSelect = document.getElementById('masekhetSelect');
+        masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+        masekhetSelect.disabled = true;
+
+        const perekSelect = document.getElementById('perekSelect');
+        perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+        perekSelect.disabled = true;
+
+        const mishnaSelect = document.getElementById('mishnaSelect');
+        mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+        mishnaSelect.disabled = true;
+
+        renderMishnayot(allMishnayot);
+    }
+
+    function renderMishnayot(list, isDaily = false) {
+        const app = document.getElementById('app');
+        app.innerHTML = ''; 
+
+        if (list.length === 0) {
+            app.innerHTML = `
+                <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6">
+                    <p class="text-3xl mb-2">📚</p>
+                    <p class="text-sm font-bold text-slate-700 mb-1">ტექსტი ჯერ არ არის დამატებული</p>
+                    <p class="text-xs text-slate-500">ამ არჩეული მიშნის თარგმანი მალე დაემატება ბაზაში.</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
+    }
+
+    function createMishnaCard(item, isDaily) {
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
+        
+        card.innerHTML = `
+            ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
+
+            <div class="text-center mb-6">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">${item.seder}</span>
+                <h1 class="text-2xl font-extrabold text-slate-800 mt-1">ტრაქტატი ${item.masekhet}</h1>
+                <p class="text-xs text-slate-500 font-semibold mt-1">თავი ${item.perek} • მიშნა ${item.mishna}</p>
+            </div>
+
+            <!-- ებრაული -->
+            <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+                    <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                        <span>🔊</span> <span>მოსმენა</span>
+                    </button>
+                </div>
+                <p class="dynamic-text-hebrew font-serif text-slate-800 leading-relaxed">${item.hebrew}</p>
+            </div>
+
+            <!-- ტრანსლიტერაცია -->
+            ${item.transliteration ? `
+            <div class="bg-slate-50 border-l-4 border-slate-400 p-4 rounded-xl mb-3">
+                <span class="text-[10px] font-bold text-slate-500 uppercase block mb-1">ტრანსლიტერაცია</span>
+                <p class="dynamic-text-trans text-slate-700 italic leading-relaxed">${item.transliteration}</p>
+            </div>` : ''}
+
+            <!-- ქართული თარგმანი -->
+            ${item.georgian ? `
+            <div class="bg-blue-50/50 border-l-4 border-blue-500 p-4 rounded-xl mb-3">
+                <span class="text-[10px] font-bold text-blue-700 uppercase block mb-1">ქართული თარგმანი</span>
+                <p class="dynamic-text-georgian text-slate-800 font-medium leading-relaxed">${item.georgian}</p>
+            </div>` : ''}
+
+            <!-- კეჰათი -->
+            ${item.kehati ? `
+            <div class="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
+                <span class="text-[10px] font-bold text-emerald-700 uppercase block mb-1">კეჰათის განმარტება</span>
+                <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.kehati}</p>
+            </div>` : ''}
+
+            <!-- ბარტანურა -->
+            ${item.bartenura ? `
+            <div class="bg-purple-50/50 border-l-4 border-purple-500 p-4 rounded-xl mb-3">
+                <span class="text-[10px] font-bold text-purple-700 uppercase block mb-1">ბარტანურას განმარტება</span>
+                <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.bartenura}</p>
+            </div>` : ''}
+        `;
+        return card;
+    }
+
+    function escapeQuotes(str) {
+        if (!str) return '';
+        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function stopSpeech() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
         }
     }
-}
 
-function stopSpeech() {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
+    function speakText(text, lang) {
+        if (!('speechSynthesis' in window)) return;
+        stopSpeech();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang === 'he' ? 'he-IL' : 'ka-GE';
+        window.speechSynthesis.speak(utterance);
     }
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+
+    function showDailyMishna() {
+        if (allMishnayot.length === 0) return;
+        const today = new Date();
+        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const index = dayOfYear % allMishnayot.length;
+        renderMishnayot([allMishnayot[index]], true);
     }
-}
 
-function showDailyMishna() {
-    if (allMishnayot.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * allMishnayot.length);
-    renderMishnayot([allMishnayot[randomIndex]], true);
-}
-
-updateFontScale();
-fetchMishnaData();
-</script>
-
+    window.onload = () => {
+        updateFontScale();
+        fetchMishnaData();
+    };
+    </script>
 </body>
 </html>
+
+        
