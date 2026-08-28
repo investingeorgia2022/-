@@ -114,7 +114,7 @@ const MISHNA_STRUCTURE = {
 let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
-let isUpdatingFromScroll = false; // თავიდან აიცილებს ციკლურ გამოძახებებს
+let isUpdatingFromScroll = false;
 
 function updateFontScale() {
     document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -493,7 +493,6 @@ function createMishnaCard(item, isDaily) {
     return card;
 }
 
-// ოპტიმიზებული სქროლის ლოგიკა (Lag-ის გარეშე)
 let isScrolling = false;
 let lastActiveCard = null;
 
@@ -523,7 +522,6 @@ function updateActiveMishnaOnScroll() {
 
         document.getElementById('currentMishnaText').innerText = `${seder} • ტრაქტატი ${masekhet} • თავი ${perek} • მიშნა ${mishna}`;
 
-        // ავტომატურად განვაახლოთ სელექტორები (ფილტრაციის ხელახლა გამოძახების გარეშე)
         isUpdatingFromScroll = true;
         updateDropdownsSilently(seder, masekhet, perek, mishna);
         isUpdatingFromScroll = false;
@@ -536,12 +534,10 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     const perekSelect = document.getElementById('perekSelect');
     const mishnaSelect = document.getElementById('mishnaSelect');
 
-    // 1. Seder
     if (sederSelect.value !== seder) {
         sederSelect.value = seder;
     }
 
-    // 2. Masekhet
     if (seder && MISHNA_STRUCTURE[seder]) {
         const masekhtot = Object.keys(MISHNA_STRUCTURE[seder]);
         masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
@@ -552,7 +548,6 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
         masekhetSelect.value = masekhet;
     }
 
-    // 3. Perek
     if (seder && masekhet && MISHNA_STRUCTURE[seder]?.[masekhet]) {
         const masekhetData = MISHNA_STRUCTURE[seder][masekhet];
         let totalPerakim = typeof masekhetData === 'object' ? Object.keys(masekhetData).length : masekhetData;
@@ -565,7 +560,6 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
         perekSelect.value = perek;
     }
 
-    // 4. Mishna
     if (perek) {
         let maxMishna = 10;
         const masekhetData = MISHNA_STRUCTURE[seder]?.[masekhet];
