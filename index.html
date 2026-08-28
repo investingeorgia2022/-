@@ -19,6 +19,12 @@
         <!-- მართვისა და ფილტრების ბლოკი -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
             
+            <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
+            <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
+                <span class="text-blue-600 font-extrabold text-xs">📍</span>
+                <span id="currentMishnaText" class="text-xs font-bold text-blue-900 truncate">აირჩიეთ ან ჩამოქაჩეთ მიშნა...</span>
+            </div>
+
             <!-- ძიება და ფონტის მართვა -->
             <div class="flex gap-2">
                 <div class="relative flex-1">
@@ -79,7 +85,7 @@
         </div>
 
         <!-- მიშნების სია -->
-        <div id="app" class="space-y-6">
+        <div id="app" class="space-y-6 pt-2">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
                 <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
@@ -102,7 +108,7 @@ const MISHNA_STRUCTURE = {
     "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
     "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
     "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
-    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
 };
 
 let allMishnayot = [];
@@ -221,8 +227,7 @@ async function fetchMishnaData() {
     populateSederDropdown();
     renderMishnayot(allMishnayot);
 }
-
-function populateSederDropdown() {
+        function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -397,16 +402,20 @@ function renderMishnayot(list, isDaily = false) {
                 <p class="text-xs text-slate-500">ამ არჩეული მიშნის თარგმანი მალე დაემატება ბაზაში.</p>
             </div>
         `;
+        document.getElementById('currentMishnaText').innerText = "შედეგი არ მოიძებნა";
         return;
     }
 
     list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
+    updateActiveMishnaOnScroll();
 }
 
 function createMishnaCard(item, isDaily) {
     const card = document.createElement('div');
-    card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
+    card.className = `mishna-card bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
     
+    card.setAttribute('data-info', `${item.seder} • ტრაქტატი ${item.masekhet} • თავი ${item.perek} • მიშნა ${item.mishna}`);
+
     card.innerHTML = `
         ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
 
@@ -418,7 +427,7 @@ function createMishnaCard(item, isDaily) {
 
         <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+                <span class="text-[10px] font-bold text-amber-700">מקור (ორიגინალი)</span>
                 <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
@@ -474,6 +483,28 @@ function createMishnaCard(item, isDaily) {
     `;
     return card;
 }
+
+function updateActiveMishnaOnScroll() {
+    const cards = document.querySelectorAll('.mishna-card');
+    if (cards.length === 0) return;
+
+    let currentCard = cards[0];
+    const triggerBottom = window.innerHeight / 2;
+
+    cards.forEach(card => {
+        const box = card.getBoundingClientRect();
+        if (box.top <= triggerBottom) {
+            currentCard = card;
+        }
+    });
+
+    const info = currentCard.getAttribute('data-info');
+    if (info) {
+        document.getElementById('currentMishnaText').innerText = info;
+    }
+}
+
+window.addEventListener('scroll', updateActiveMishnaOnScroll);
 
 function switchTab(id, tab) {
     const bartenuraContent = document.getElementById(`content-bartenura-${id}`);
