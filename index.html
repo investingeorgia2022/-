@@ -11,7 +11,6 @@
         .dynamic-text-trans { font-size: calc(0.75rem * var(--text-scale, 1)); }
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
         
-        /* ანიმაცია მართვის პანელის აკეცვა-ჩამოშლისთვის */
         #headerContainer {
             transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
@@ -24,10 +23,9 @@
 </head>
 <body class="bg-slate-100 h-screen overflow-hidden font-sans">
 
-    <!-- მთავარი კონტეინერი -->
     <div class="max-w-xl w-full mx-auto h-full relative flex flex-col p-4">
         
-        <!-- აკეცვადი მართვის ბლოკი (აბსოლუტური პოზიციონირებით) -->
+        <!-- აკეცვადი მართვის ბლოკი -->
         <div id="headerContainer" class="absolute top-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-lg border border-slate-200 space-y-3 z-20">
             
             <!-- ძიება და ფონტის მართვა -->
@@ -42,7 +40,6 @@
                     >
                 </div>
 
-                <!-- ფონტის ზომის მართვის ღილაკები -->
                 <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-300 gap-1">
                     <button onclick="changeFontSize(-0.1)" title="ფონტის შემცირება" class="w-7 h-7 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A-</button>
                     <button onclick="resetFontSize()" id="fontSizeLabel" title="ზომის ჩამოყრა" class="px-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 transition">100%</button>
@@ -89,7 +86,7 @@
             </div>
         </div>
 
-        <!-- მიშნების სქროლვადი სია (იკავებს 100% სიმაღლეს, pt-44 უზრუნველყოფს რომ პირველი ბარათი მენიუს ქვეშ არ დაიმალოს) -->
+        <!-- მიშნების სქროლვადი სია -->
         <div id="app" class="h-full overflow-y-auto pt-44 pr-1 space-y-6">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
@@ -142,7 +139,7 @@
         if (!str) return '';
         return str.toString().replace(/\(.*\)/g, '').replace(/[\u0590-\u05FF]/g, '').toLowerCase().trim();
     }
-    function parseCSV(text) {
+        function parseCSV(text) {
         const lines = [];
         let row = [];
         let inQuotes = false;
@@ -409,25 +406,29 @@
         list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
     }
 
+    /* ტაბების გადართვის დახვეწილი სკრიპტი */
     function switchTab(cardId, tabName) {
+        stopSpeech();
         const kehatiTab = document.getElementById(`tab-kehati-${cardId}`);
         const bartenuraTab = document.getElementById(`tab-bartenura-${cardId}`);
         const kehatiContent = document.getElementById(`content-kehati-${cardId}`);
         const bartenuraContent = document.getElementById(`content-bartenura-${cardId}`);
 
         if (tabName === 'kehati') {
-            kehatiTab?.classList.add('border-emerald-500', 'text-emerald-700', 'font-bold');
-            kehatiTab?.classList.remove('border-transparent', 'text-slate-500');
-            bartenuraTab?.classList.remove('border-purple-500', 'text-purple-700', 'font-bold');
-            bartenuraTab?.classList.add('border-transparent', 'text-slate-500');
+            kehatiTab?.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+            kehatiTab?.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
+            
+            bartenuraTab?.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
+            bartenuraTab?.classList.add('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
             
             if (kehatiContent) kehatiContent.style.display = 'block';
             if (bartenuraContent) bartenuraContent.style.display = 'none';
         } else {
-            bartenuraTab?.classList.add('border-purple-500', 'text-purple-700', 'font-bold');
-            bartenuraTab?.classList.remove('border-transparent', 'text-slate-500');
-            kehatiTab?.classList.remove('border-emerald-500', 'text-emerald-700', 'font-bold');
-            kehatiTab?.classList.add('border-transparent', 'text-slate-500');
+            bartenuraTab?.classList.add('bg-purple-600', 'text-white', 'shadow-md');
+            bartenuraTab?.classList.remove('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
+            
+            kehatiTab?.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+            kehatiTab?.classList.add('bg-slate-100', 'text-slate-600', 'hover:bg-slate-200');
 
             if (bartenuraContent) bartenuraContent.style.display = 'block';
             if (kehatiContent) kehatiContent.style.display = 'none';
@@ -453,7 +454,7 @@
             <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
                 <div class="flex justify-between items-center mb-1">
                     <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
-                    <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                    <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
                         <span>🔊</span> <span>მოსმენა</span>
                     </button>
                 </div>
@@ -470,33 +471,57 @@
             <!-- ქართული თარგმანი -->
             ${item.georgian ? `
             <div class="bg-blue-50/50 border-l-4 border-blue-500 p-4 rounded-xl mb-3">
-                <span class="text-[10px] font-bold text-blue-700 uppercase block mb-1">ქართული თარგმანი</span>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-blue-700 uppercase">ქართული თარგმანი</span>
+                    <button onclick="speakText('${escapeQuotes(item.georgian)}', 'ka')" class="text-xs bg-blue-200/60 hover:bg-blue-300 text-blue-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
+                        <span>🔊</span> <span>მოსმენა</span>
+                    </button>
+                </div>
                 <p class="dynamic-text-georgian text-slate-800 font-medium leading-relaxed">${item.georgian}</p>
             </div>` : ''}
 
-            <!-- განმარტებების ტაბები -->
+            <!-- განმარტებების დახვეწილი ტაბები და გახმოვანება -->
             ${hasCommentary ? `
-            <div class="mt-4 border-t border-slate-100 pt-3">
-                <div class="flex border-b border-slate-200 mb-3 gap-2">
+            <div class="mt-5 border-t border-slate-100 pt-4">
+                <!-- ტაბების სტილიზებული გადამრთველი -->
+                <div class="flex p-1 bg-slate-100 rounded-xl mb-4 gap-1">
                     ${item.kehati ? `
-                    <button id="tab-kehati-${item.id}" onclick="switchTab(${item.id}, 'kehati')" class="pb-2 px-3 text-xs border-b-2 border-emerald-500 text-emerald-700 font-bold transition">
-                        კეჰათი
+                    <button id="tab-kehati-${item.id}" onclick="switchTab(${item.id}, 'kehati')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-md transition flex items-center justify-center gap-1.5">
+                        <span>📖</span>
+                        <span>კეჰათი</span>
                     </button>` : ''}
                     ${item.bartenura ? `
-                    <button id="tab-bartenura-${item.id}" onclick="switchTab(${item.id}, 'bartenura')" class="pb-2 px-3 text-xs border-b-2 ${!item.kehati ? 'border-purple-500 text-purple-700 font-bold' : 'border-transparent text-slate-500'} transition">
-                        ბარტანურა
+                    <button id="tab-bartenura-${item.id}" onclick="switchTab(${item.id}, 'bartenura')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg ${!item.kehati ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition flex items-center justify-center gap-1.5">
+                        <span>📜</span>
+                        <span>ბარტანურა</span>
                     </button>` : ''}
                 </div>
 
+                <!-- კეჰათის ბლოკი -->
                 ${item.kehati ? `
-                <div id="content-kehati-${item.id}" class="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
-                    <span class="text-[10px] font-bold text-emerald-700 uppercase block mb-1">კეჰათის განმარტება</span>
+                <div id="content-kehati-${item.id}" class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-1">
+                            <span>📖</span> კეჰათის განმარტება
+                        </span>
+                        <button onclick="speakText('${escapeQuotes(item.kehati)}', 'ka')" class="text-xs bg-emerald-200/70 hover:bg-emerald-300 text-emerald-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <span>🔊</span> <span>მოსმენა</span>
+                        </button>
+                    </div>
                     <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.kehati}</p>
                 </div>` : ''}
 
+                <!-- ბარტანურას ბლოკი -->
                 ${item.bartenura ? `
-                <div id="content-bartenura-${item.id}" class="bg-purple-50/50 border-l-4 border-purple-500 p-4 rounded-xl mb-3" style="display: ${item.kehati ? 'none' : 'block'};">
-                    <span class="text-[10px] font-bold text-purple-700 uppercase block mb-1">ბარტანურას განმარტება</span>
+                <div id="content-bartenura-${item.id}" class="bg-purple-50/60 border-l-4 border-purple-500 p-4 rounded-xl mb-3" style="display: ${item.kehati ? 'none' : 'block'};">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-purple-800 uppercase flex items-center gap-1">
+                            <span>📜</span> ბარტანურას განმარტება
+                        </span>
+                        <button onclick="speakText('${escapeQuotes(item.bartenura)}', 'ka')" class="text-xs bg-purple-200/70 hover:bg-purple-300 text-purple-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            <span>🔊</span> <span>მოსმენა</span>
+                        </button>
+                    </div>
                     <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.bartenura}</p>
                 </div>` : ''}
             </div>` : ''}
@@ -506,7 +531,7 @@
 
     function escapeQuotes(str) {
         if (!str) return '';
-        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
     }
 
     function stopSpeech() {
@@ -540,10 +565,8 @@
         let currentScroll = appContainer.scrollTop;
 
         if (currentScroll > lastScrollTop && currentScroll > 60) {
-            // ქვევით სქროლვა -> პანელი აიკეცება და ტექსტი მთლიანად ამოვა მაღლა
             headerContainer.classList.add('header-hidden');
         } else {
-            // ზევით სქროლვა -> პანელი გამოჩნდება
             headerContainer.classList.remove('header-hidden');
         }
         lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
@@ -556,3 +579,4 @@
     </script>
 </body>
 </html>
+    
