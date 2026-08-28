@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>მიშნა ქართულად</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+:root { --text-scale: 1; }
+.dynamic-text-hebrew { font-size: calc(1.25rem * var(--text-scale)); }
+.dynamic-text-georgian { font-size: calc(0.95rem * var(--text-scale)); }
+.dynamic-text-trans { font-size: calc(0.80rem * var(--text-scale)); }
+.dynamic-text-commentary { font-size: calc(0.85rem * var(--text-scale)); }
+#headerContainer { transition: transform .3s ease, opacity .3s ease; }
+.header-hidden { transform: translateY(-120%); opacity: 0; pointer-events: none; }
+.speech-active { opacity: .65; }
+</style>
+</head>
+
+<body class="bg-slate-100 h-screen overflow-hidden font-sans">
+<div class="max-w-xl w-full mx-auto h-full relative flex flex-col p-4">
+
+<div id="headerContainer"
+class="absolute top-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-lg border border-slate-200 space-y-3 z-20">
+
+<div class="flex gap-2">
+<input type="text" id="searchInput" oninput="handleSearch()"
+placeholder="🔍 მოძებნე მიშნა, სიტყვა ან თემა..."
+class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+
+<div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-300 gap-1">
+<button onclick="changeFontSize(-0.1)" class="w-7 h-7 bg-white rounded-lg text-xs font-bold">A-</button>
+<button onclick="resetFontSize()" id="fontSizeLabel" class="px-1.5 text-[10px] font-bold text-slate-500">100%</button>
+<button onclick="changeFontSize(0.1)" class="w-7 h-7 bg-white rounded-lg text-xs font-bold">A+</button>
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+<select id="sederSelect" onchange="onSederChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2">
+<option value="">ყველა სედერი</option>
+</select>
+
+<select id="masekhetSelect" onchange="onMasekhetChange()" disabled class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2">
+<option value="">ყველა ტრაქტატი</option>
+</select>
+
+<select id="perekSelect" onchange="onPerekChange()" disabled class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2">
+<option value="">ყველა თავი</option>
+</select>
+
+<select id="mishnaSelect" onchange="onMishnaChange()" disabled class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2">
+<option value="">ყველა მიშნა</option>
+</select>
+</div>
+
+<div class="flex gap-2">
+<button onclick="showDailyMishna()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-3 rounded-xl">
+📅 დღის მიშნა
+</button>
+
+<button onclick="resetFilters()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 px-4 rounded-xl">
+↺ გასუფთავება
+</button>
+</div>
+
+<div id="speechStatus" class="hidden text-[11px] text-center text-slate-500"></div>
+</div>
+
+<div id="app" class="h-full overflow-y-auto pt-48 pr-1 space-y-6">
+<div id="loading" class="text-center py-12">
+<div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
+<p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
+</div>
+</div>
+
+</div>
+
+<script>
+const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
+const SHEET_GID = '0';
+
+// ორი პირდაპირი Google Sheets მისამართი
+const CSV_URLS = [
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`,
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`
+];
+
+// Proxy გამოიყენება მხოლოდ როგორც ბოლო ვარიანტი
+const PROXY_URLS = CSV_URLS.map(url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+
+const MISHNA_STRUCTURE = {
+"ზერაყიმი (זרעים)":{"ბერახოთი (ברכות)":{1:5,2:8,3:6,4:7,5:5,6:8,7:5,8:8,9:5},"ფეა (פאה)":8,"დმაი (דמאי)":7,"ქილაყიმი (כלאים)":9,"შევიყითი (שביעית)":10,"თრუმოთი (תרומות)":11,"მაყასროთი (מעשרות)":5,"მაყასერ შენი (מעשר שני)":5,"ხალა (חלה)":4,"ყორლა (ערלה)":3,"ბიქურიმი (ביכורים)":4},
+"მოყედი (מועד)":{"შაბათი (שבת)":24,"ყერუვინი (עירובין)":10,"ფესახიმი (פסחים)":10,"შეკალიმი (שקלים)":8,"იომა (יומא)":8,"სუქა (סוכה)":5,"ბეცა (ביצה)":5,"როშ ჰაშანა (ראש השנה)":4,"თაყანითი (תענית)":4,"მეგილა (מגילה)":4,"მოყედ კატანი (מועד קטן)":3,"ხაგიგა (חגיגה)":3},
+"ნაშიმი (נשים)":{"იევამოთი (יבמות)":16,"ქეთუბოთი (כתובות)":13,"ნედარიმი (נדרים)":11,"ნაზირი (נזיר)":9,"სოტა (סוטה)":9,"გიტინი (גיטין)":9,"ქიდუშინი (קידושין)":4},
+"ნეზიკინი (נזיקין)":{"ბავა კამა (בבא קמא)":10,"ბავა მეციყა (בבא מציעא)":10,"ბავა ბათრა (בבא בתרא)":10,"სანჰედრინი (סנהדרין)":11,"მაქოთი (מכות)":3,"შევუოთი (שבועות)":8,"ყედუიოთი (עדויות)":8,"ყავოდა ზარა (עבודה זרה)":5,"ავოთი / პირქე ავოთი (אבות)":6,"ჰორაიოთი (הוריות)":3},
+"კოდაშიმი (קדשים)":{"ზებახიმი (זבחים)":14,"მენახოთი (מנחות)":13,"ხულინი (חולין)":12,"ბექოროთი (בכורות)":9,"ყარაქინი (ערכין)":9,"თემურა (תמורה)":7,"ქრითოთი (כריתות)":6,"მეყილა (מעילה)":6,"თამიდი (תמיד)":7,"მიდოთი (מידות)":5,"კინემი (קינים)":3},
+"ტაჰაროთი (טהרות)":{"ქელიმი (כלים)":30,"ოჰოლოტი (אהלות)":18,"ნეგაყიმი (נגעים)":14,"ფარა (פרה)":12,"ტაჰაროთი (טהרות)":10,"მიქვაოთი (מקוואות)":10,"ნიდა (נדה)":10,"მახშირინი (מכשירין)":6,"ზავიმი (זבים)":5,"ტევულ იომი (טבול יום)":4,"იადაყიმი (ידיים)":4,"ყუქცინი (עוקצין)":3}
+};
+
+let allMishnayot = [];
+let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
+let currentAudio = null;
+let audioStopped = false;
+
+function escapeHTML(value='') {
+return String(value)
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#039;');
+}
+
+function updateFontScale() {
+document.documentElement.style.setProperty('--text-scale', fontScale);
+document.getElementById('fontSizeLabel').innerText = `${Math.round(fontScale * 100)}%`;
+localStorage.setItem('mishnaFontScale', fontScale);
+}
+
+function changeFontSize(delta) {
+const next = +(fontScale + delta).toFixed(1);
+if (next >= 0.7 && next <= 1.8) {
+fontScale = next;
+updateFontScale();
+}
+}
+
+function resetFontSize() {
+fontScale = 1;
+updateFontScale();
+}
+
+function cleanString(str='') {
+return String(str)
+.replace(/\([^)]*\)/g,'')
+.replace(/[\u0590-\u05FF]/g,'')
+.toLowerCase()
+.trim();
+}
+
+function parseCSV(text) {
+const rows = [];
+let row = [];
+let cell = '';
+let quoted = false;
+
+for (let i=0;i<text.length;i++) {
+const ch = text[i];
+const next = text[i+1];
+
+if (ch === '"') {
+if (quoted && next === '"') {
+cell += '"';
+i++;
+} else {
+quoted = !quoted;
+}
+} else if (ch === ',' && !quoted) {
+row.push(cell.trim());
+cell = '';
+} else if ((ch === '\n' || ch === '\r') && !quoted) {
+if (ch === '\r' && next === '\n') i++;
+row.push(cell.trim());
+if (row.length > 1 || row[0] !== '') rows.push(row);
+row = [];
+cell = '';
+} else {
+cell += ch;
+}
+}
+if (cell !== '' || row.length) {
+row.push(cell.trim());
+rows.push(row);
+}
+return rows;
+}
+
+async function fetchMishnaData() {
+    const loading = document.getElementById('loading');
+    loading.innerHTML = `
+        <div class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
+            <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
+        </div>`;
+
+    let csvText = '';
+    const errors = [];
+
+    async function tryLoad(url, label) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                signal: controller.signal
+            });
+
+            clearTimeout(timer);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const result = await response.text();
+
+            // თუ Google-მა CSV-ის ნაცვლად HTML/login/error გვერდი დააბრუნა
+            const first = result.trim().toLowerCase();
+            if (
+                !result.trim() ||
+                first.startsWith('<!doctype html') ||
+                first.startsWith('<html') ||
+                first.includes('accounts.google.com') ||
+                first.includes('sign in')
+            ) {
+                throw new Error('Google-მა CSV მონაცემების ნაცვლად HTML გვერდი დააბრუნა');
+            }
+
+            return result;
+        } catch (error) {
+            clearTimeout(timer);
+            errors.push(`${label}: ${error.message}`);
+            return '';
+        }
+    }
+
+    // ჯერ პირდაპირ Google Sheets-ს ვუკავშირდებით
+    for (let i = 0; i < CSV_URLS.length && !csvText; i++) {
+        csvText = await tryLoad(CSV_URLS[i], `Google Sheets ${i + 1}`);
+    }
+
+    // თუ პირდაპირი კავშირი ვერ გამოვიდა, მხოლოდ მაშინ ვიყენებთ Proxy-ს
+    for (let i = 0; i < PROXY_URLS.length && !csvText; i++) {
+        csvText = await tryLoad(PROXY_URLS[i], `Proxy ${i + 1}`);
+    }
+
+    if (!csvText) {
+        console.error('Google Sheets loading errors:', errors);
+
+        loading.innerHTML = `
+            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+                <p class="font-bold mb-2">⚠️ Google Sheets მონაცემები ვერ ჩაიტვირთა</p>
+                <p class="text-xs leading-relaxed mb-3">
+                    სავარაუდოდ Google Sheet არ არის საჯაროდ ხელმისაწვდომი.
+                    Google Sheets-ში გახსენით <b>გაზიარება (Share)</b> და დააყენეთ:
+                    <b>Anyone with the link → Viewer</b>.
+                </p>
+                <button onclick="fetchMishnaData()" class="mt-1 bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-sm">
+                    ↻ ხელახლა ცდა
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    const rows = parseCSV(csvText);
+
+    if (!rows || rows.length < 2) {
+        console.error('CSV parsed, but no data rows found:', rows);
+        loading.innerHTML = `
+            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+                <p class="font-bold mb-2">⚠️ Sheet გაიხსნა, მაგრამ მონაცემები ვერ მოიძებნა</p>
+                <p class="text-xs">
+                    შეამოწმეთ, რომ პირველ სტრიქონში სათაურებია და მონაცემები იწყება მეორე სტრიქონიდან.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    allMishnayot = [];
+
+    for (let i = 1; i < rows.length; i++) {
+        const d = rows[i];
+        if (!d || !d[0]) continue;
+
+        allMishnayot.push({
+            id: i,
+            seder: (d[1] || '').trim(),
+            masekhet: (d[2] || '').trim(),
+            perek: (d[3] || '').trim(),
+            mishna: (d[4] || '').trim(),
+            hebrew: d[5] || '',
+            transliteration: d[6] || '',
+            georgian: d[7] || '',
+            kehati: d[8] || '',
+            bartenura: d[9] || ''
+        });
+    }
+
+    if (allMishnayot.length === 0) {
+        loading.innerHTML = `
+            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+                <p class="font-bold mb-2">⚠️ მონაცემები ვერ იქნა ამოცნობილი</p>
+                <p class="text-xs">
+                    CSV ფაილის სვეტების სტრუქტურა არ ემთხვევა კოდის მოლოდინს.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    populateSederDropdown();
+    renderMishnayot(allMishnayot);
+}
+function populateSederDropdown() {
+const select = document.getElementById('sederSelect');
+select.innerHTML = '<option value="">ყველა სედერი</option>';
+Object.keys(MISHNA_STRUCTURE).forEach(name => {
+select.innerHTML += `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`;
+});
+}
+
+function onSederChange() {
+const seder = document.getElementById('sederSelect').value;
+const masekhet = document.getElementById('masekhetSelect');
+const perek = document.getElementById('perekSelect');
+const mishna = document.getElementById('mishnaSelect');
+
+perek.innerHTML = '<option value="">ყველა თავი</option>';
+perek.disabled = true;
+mishna.innerHTML = '<option value="">ყველა მიშნა</option>';
+mishna.disabled = true;
+
+if (!seder || !MISHNA_STRUCTURE[seder]) {
+masekhet.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+masekhet.disabled = true;
+applyFilters();
+return;
+}
+
+masekhet.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+Object.keys(MISHNA_STRUCTURE[seder]).forEach(name => {
+masekhet.innerHTML += `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`;
+});
+masekhet.disabled = false;
+applyFilters();
+}
+
+function onMasekhetChange() {
+const seder = document.getElementById('sederSelect').value;
+const masekhetName = document.getElementById('masekhetSelect').value;
+const perek = document.getElementById('perekSelect');
+const mishna = document.getElementById('mishnaSelect');
+
+mishna.innerHTML = '<option value="">ყველა მიშნა</option>';
+mishna.disabled = true;
+
+const data = MISHNA_STRUCTURE[seder]?.[masekhetName];
+if (!data) {
+perek.innerHTML = '<option value="">ყველა თავი</option>';
+perek.disabled = true;
+applyFilters();
+return;
+}
+
+const count = typeof data === 'object' ? Object.keys(data).length : data;
+perek.innerHTML = '<option value="">ყველა თავი</option>';
+for (let i=1;i<=count;i++) {
+perek.innerHTML += `<option value="${i}">თავი ${i}</option>`;
+}
+perek.disabled = false;
+applyFilters();
+}
+
+function onPerekChange() {
+const seder = document.getElementById('sederSelect').value;
+const masekhet = document.getElementById('masekhetSelect').value;
+const perekValue = document.getElementById('perekSelect').value;
+const mishnaSelect = document.getElementById('mishnaSelect');
+
+if (!perekValue) {
+mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+mishnaSelect.disabled = true;
+applyFilters();
+return;
+}
+
+const structureData = MISHNA_STRUCTURE[seder]?.[masekhet];
+let maxMishna = 10;
+if (typeof structureData === 'object' && structureData[perekValue]) {
+maxMishna = structureData[perekValue];
+}
+
+const found = allMishnayot
+.filter(x => cleanString(x.seder) === cleanString(seder)
+&& cleanString(x.masekhet) === cleanString(masekhet)
+&& String(x.perek) === String(perekValue))
+.map(x => parseInt(x.mishna,10))
+.filter(Number.isFinite);
+
+if (found.length) maxMishna = Math.max(maxMishna, Math.max(...found));
+
+mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+for (let i=1;i<=maxMishna;i++) {
+mishnaSelect.innerHTML += `<option value="${i}">მიშნა ${i}</option>`;
+}
+mishnaSelect.disabled = false;
+applyFilters();
+}
+
+function onMishnaChange() {
+applyFilters();
+}
+
+function applyFilters() {
+stopSpeech();
+
+const query = document.getElementById('searchInput').value.toLowerCase().trim();
+const seder = document.getElementById('sederSelect').value;
+const masekhet = document.getElementById('masekhetSelect').value;
+const perek = document.getElementById('perekSelect').value;
+const mishna = document.getElementById('mishnaSelect').value;
+
+let filtered = [...allMishnayot];
+
+if (seder) filtered = filtered.filter(x => cleanString(x.seder) === cleanString(seder));
+if (masekhet) filtered = filtered.filter(x => cleanString(x.masekhet) === cleanString(masekhet));
+if (perek) filtered = filtered.filter(x => String(x.perek) === String(perek));
+if (mishna) filtered = filtered.filter(x => String(x.mishna) === String(mishna));
+
+if (query) {
+filtered = filtered.filter(x => [
+x.georgian, x.hebrew, x.transliteration, x.kehati, x.bartenura
+].some(v => String(v||'').toLowerCase().includes(query)));
+}
+
+renderMishnayot(filtered);
+}
+
+function handleSearch() {
+applyFilters();
+}
+
+function resetFilters() {
+stopSpeech();
+document.getElementById('searchInput').value = '';
+document.getElementById('sederSelect').value = '';
+
+['masekhetSelect','perekSelect','mishnaSelect'].forEach((id,index) => {
+const el = document.getElementById(id);
+el.innerHTML = index === 0
+? '<option value="">ყველა ტრაქტატი</option>'
+: index === 1
+? '<option value="">ყველა თავი</option>'
+: '<option value="">ყველა მიშნა</option>';
+el.disabled = true;
+});
+
+renderMishnayot(allMishnayot);
+}
+
+function renderMishnayot(list, isDaily=false) {
+const app = document.getElementById('app');
+app.innerHTML = '';
+
+if (!list.length) {
+app.innerHTML = `
+<div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6 mt-4">
+<p class="text-3xl mb-2">📚</p>
+<p class="text-sm font-bold text-slate-700 mb-1">ტექსტი ჯერ არ არის დამატებული</p>
+<p class="text-xs text-slate-500">ამ არჩეული მიშნის თარგმანი მალე დაემატება ბაზაში.</p>
+</div>`;
+return;
+}
+
+list.forEach(item => app.appendChild(createMishnaCard(item,isDaily)));
+}
+
+function switchTab(cardId, tabName) {
+stopSpeech();
+
+const kehatiTab = document.getElementById(`tab-kehati-${cardId}`);
+const bartenuraTab = document.getElementById(`tab-bartenura-${cardId}`);
+const kehatiContent = document.getElementById(`content-kehati-${cardId}`);
+const bartenuraContent = document.getElementById(`content-bartenura-${cardId}`);
+
+if (tabName === 'kehati') {
+if (kehatiTab) kehatiTab.className = 'flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-md';
+if (bartenuraTab) bartenuraTab.className = 'flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-600';
+if (kehatiContent) kehatiContent.style.display = 'block';
+if (bartenuraContent) bartenuraContent.style.display = 'none';
+} else {
+if (bartenuraTab) bartenuraTab.className = 'flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-purple-600 text-white shadow-md';
+if (kehatiTab) kehatiTab.className = 'flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-slate-100 text-slate-600';
+if (bartenuraContent) bartenuraContent.style.display = 'block';
+if (kehatiContent) kehatiContent.style.display = 'none';
+}
+}
+
+function createMishnaCard(item, isDaily) {
+const card = document.createElement('div');
+card.className = `bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
+
+const hasCommentary = item.kehati || item.bartenura;
+const h = escapeHTML(item.hebrew);
+const t = escapeHTML(item.transliteration);
+const g = escapeHTML(item.georgian);
+const k = escapeHTML(item.kehati);
+const b = escapeHTML(item.bartenura);
+
+card.innerHTML = `
+${isDaily ? '<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full">დღის მიშნა</span>' : ''}
+
+<div class="text-center mb-6">
+<span class="text-xs font-bold text-blue-600">${escapeHTML(item.seder)}</span>
+<h1 class="text-xl font-extrabold text-slate-800 mt-1">ტრაქტატი ${escapeHTML(item.masekhet)}</h1>
+<p class="text-xs text-slate-500 font-semibold mt-1">თავი ${escapeHTML(item.perek)} • მიშნა ${escapeHTML(item.mishna)}</p>
+</div>
+
+<div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+<button class="speak-hebrew text-xs bg-amber-200/60 text-amber-900 font-bold px-2 py-1 rounded-lg">🔊 მოსმენა</button>
+</div>
+<p class="dynamic-text-hebrew font-serif text-slate-800 leading-relaxed">${h}</p>
+</div>
+
+${item.transliteration ? `
+<div class="bg-slate-50 border-l-4 border-slate-400 p-4 rounded-xl mb-3">
+<span class="text-[10px] font-bold text-slate-500 block mb-1">ტრანსლიტერაცია</span>
+<p class="dynamic-text-trans text-slate-700 italic leading-relaxed">${t}</p>
+</div>` : ''}
+
+${item.georgian ? `
+<div class="bg-blue-50/50 border-l-4 border-blue-500 p-4 rounded-xl mb-3">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-blue-700">ქართული თარგმანი</span>
+<button class="speak-georgian text-xs bg-blue-200/60 text-blue-900 font-bold px-2 py-1 rounded-lg">🔊 მოსმენა</button>
+</div>
+<p class="dynamic-text-georgian text-slate-800 font-medium leading-relaxed">${g}</p>
+</div>` : ''}
+
+${hasCommentary ? `
+<div class="mt-5 border-t border-slate-100 pt-4">
+<div class="flex p-1 bg-slate-100 rounded-xl mb-4 gap-1">
+${item.kehati ? `<button id="tab-kehati-${item.id}" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-md">📖 კეჰათი</button>` : ''}
+${item.bartenura ? `<button id="tab-bartenura-${item.id}" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg ${!item.kehati ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600'}">📜 ბარტანურა</button>` : ''}
+</div>
+
+${item.kehati ? `
+<div id="content-kehati-${item.id}" class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-emerald-800">📖 კეჰათის განმარტება</span>
+<button class="speak-kehati text-xs bg-emerald-200/70 text-emerald-900 font-bold px-2 py-1 rounded-lg">🔊 მოსმენა</button>
+</div>
+<p class="dynamic-text-commentary text-slate-700 leading-relaxed">${k}</p>
+</div>` : ''}
+
+${item.bartenura ? `
+<div id="content-bartenura-${item.id}" class="bg-purple-50/60 border-l-4 border-purple-500 p-4 rounded-xl mb-3" style="display:${item.kehati ? 'none' : 'block'}">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold text-purple-800">📜 ბარტანურას განმარტება</span>
+<button class="speak-bartenura text-xs bg-purple-200/70 text-purple-900 font-bold px-2 py-1 rounded-lg">🔊 მოსმენა</button>
+</div>
+<p class="dynamic-text-commentary text-slate-700 leading-relaxed">${b}</p>
+</div>` : ''}
+</div>` : ''}
+`;
+
+const hebrewButton = card.querySelector('.speak-hebrew');
+if (hebrewButton) hebrewButton.addEventListener('click', () => speakText(item.hebrew,'he'));
+
+const georgianButton = card.querySelector('.speak-georgian');
+if (georgianButton) georgianButton.addEventListener('click', () => speakText(item.georgian,'ka'));
+
+const kehatiButton = card.querySelector('.speak-kehati');
+if (kehatiButton) kehatiButton.addEventListener('click', () => speakText(item.kehati,'ka'));
+
+const bartenuraButton = card.querySelector('.speak-bartenura');
+if (bartenuraButton) bartenuraButton.addEventListener('click', () => speakText(item.bartenura,'ka'));
+
+const kehatiTab = card.querySelector(`#tab-kehati-${item.id}`);
+if (kehatiTab) kehatiTab.addEventListener('click', () => switchTab(item.id,'kehati'));
+
+const bartenuraTab = card.querySelector(`#tab-bartenura-${item.id}`);
+if (bartenuraTab) bartenuraTab.addEventListener('click', () => switchTab(item.id,'bartenura'));
+
+return card;
+}
+
+function showSpeechStatus(message='') {
+const status = document.getElementById('speechStatus');
+if (!message) {
+status.textContent = '';
+status.classList.add('hidden');
+return;
+}
+status.textContent = message;
+status.classList.remove('hidden');
+}
+
+function stopSpeech() {
+audioStopped = true;
+
+if (currentAudio) {
+try {
+currentAudio.pause();
+currentAudio.currentTime = 0;
+} catch(e) {}
+currentAudio = null;
+}
+
+if ('speechSynthesis' in window) {
+window.speechSynthesis.cancel();
+}
+
+showSpeechStatus('');
+}
+
+function splitTextForTTS(text, maxLength=180) {
+const clean = String(text||'').replace(/\s+/g,' ').trim();
+if (clean.length <= maxLength) return clean ? [clean] : [];
+
+const words = clean.split(' ');
+const parts = [];
+let part = '';
+
+for (const word of words) {
+if ((part + ' ' + word).trim().length > maxLength && part) {
+parts.push(part);
+part = word;
+} else {
+part = (part + ' ' + word).trim();
+}
+}
+if (part) parts.push(part);
+return parts;
+}
+
+function playAudio(url) {
+return new Promise((resolve,reject) => {
+const audio = new Audio(url);
+currentAudio = audio;
+
+audio.onended = () => resolve();
+audio.onerror = () => reject(new Error('Audio load failed'));
+
+audio.play().catch(reject);
+});
+}
+
+async function speakGeorgianGoogle(text) {
+const parts = splitTextForTTS(text);
+if (!parts.length) return;
+
+audioStopped = false;
+showSpeechStatus('🔊 ქართული გახმოვანება იტვირთება...');
+
+for (let i=0;i<parts.length;i++) {
+if (audioStopped) break;
+
+const url =
+'https://translate.google.com/translate_tts?ie=UTF-8'
++ '&q=' + encodeURIComponent(parts[i])
++ '&tl=ka'
++ '&client=tw-ob';
+
+await playAudio(url);
+}
+
+currentAudio = null;
+showSpeechStatus('');
+}
+
+function speakGeorgianBrowser(text) {
+if (!('speechSynthesis' in window)) return false;
+
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = 'ka-GE';
+utterance.rate = 0.9;
+
+window.speechSynthesis.speak(utterance);
+return true;
+}
+
+function speakHebrew(text) {
+if (!('speechSynthesis' in window)) {
+showSpeechStatus('ამ ბრაუზერს გახმოვანება არ აქვს.');
+return;
+}
+
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = 'he-IL';
+utterance.rate = 0.9;
+window.speechSynthesis.speak(utterance);
+}
+
+async function speakText(text, lang) {
+stopSpeech();
+if (!text || !String(text).trim()) return;
+
+if (lang === 'he') {
+speakHebrew(text);
+return;
+}
+
+try {
+await speakGeorgianGoogle(text);
+} catch (error) {
+console.warn('Google Georgian TTS failed, using browser fallback', error);
+showSpeechStatus('Google ხმა ვერ ჩაიტვირთა — გამოიყენება ბრაუზერის ხმა.');
+speakGeorgianBrowser(text);
+}
+}
+
+function showDailyMishna() {
+if (!allMishnayot.length) return;
+
+stopSpeech();
+
+const today = new Date();
+const start = new Date(today.getFullYear(),0,0);
+const day = Math.floor((today-start)/86400000);
+const index = day % allMishnayot.length;
+
+renderMishnayot([allMishnayot[index]],true);
+}
+
+let lastScrollTop = 0;
+const appContainer = document.getElementById('app');
+const headerContainer = document.getElementById('headerContainer');
+
+appContainer.addEventListener('scroll', () => {
+const current = appContainer.scrollTop;
+const delta = current - lastScrollTop;
+
+if (current <= 10) {
+headerContainer.classList.remove('header-hidden');
+} else if (delta > 5) {
+headerContainer.classList.add('header-hidden');
+} else if (delta < -25) {
+headerContainer.classList.remove('header-hidden');
+}
+
+lastScrollTop = Math.max(0,current);
+});
+
+window.addEventListener('load', () => {
+updateFontScale();
+fetchMishnaData();
+});
+</script>
+</body>
+</html>
