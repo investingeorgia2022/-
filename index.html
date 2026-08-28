@@ -11,21 +11,24 @@
         .dynamic-text-trans { font-size: calc(0.75rem * var(--text-scale, 1)); }
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
         
-        /* მენიუს გლუვი და სწრაფი დამალვა/გამოჩენა */
+        /* მენიუს გლუვი და უცაბედი დამალვა/გამოჩენა */
         #stickyHeader {
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
         }
+        
+        /* ეკრანის ზემოთ სრულად გაყვანა */
         .header-hidden {
-            transform: translateY(-130%);
+            transform: translateY(-150%) !important;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-4 font-sans">
+<body class="bg-slate-100 min-h-screen p-4 font-sans pt-60 sm:pt-52">
 
     <div class="max-w-xl mx-auto space-y-4">
         
-        <!-- მართვისა და ფილტრების ბლოკი -->
-        <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 sticky top-2 z-50">
+        <!-- მართვისა და ფილტრების ბლოკი (Fixed პოზიციონირებით) -->
+        <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 fixed top-2 left-4 right-4 max-w-xl mx-auto z-50">
             
             <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
             <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
@@ -116,7 +119,7 @@ const MISHNA_STRUCTURE = {
     "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
     "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
     "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
-    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשיრიן)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
 };
 
 let allMishnayot = [];
@@ -236,7 +239,7 @@ async function fetchMishnaData() {
     populateSederDropdown();
     renderMishnayot(allMishnayot);
 }
-   function populateSederDropdown() {
+    function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -584,7 +587,7 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
-// დახვეწილი სქროლის ლოგიკა: ქვემოთ სქროლისას ჩამოდის მენიუ, ზემოთ სქროლისას იმალება
+// ზუსტი ლოგიკა: ზემოთ ასქროლვისას იმალება, ქვემოთ ასქროლვისას გამოდის
 let lastScrollY = window.scrollY;
 
 window.addEventListener('scroll', () => {
@@ -592,22 +595,21 @@ window.addEventListener('scroll', () => {
     const header = document.getElementById('stickyHeader');
     const diff = currentScrollY - lastScrollY;
 
-    // გვერდის ყველაზე ზედა ნაწილში (30px-მდე) მენიუ ყოველთვის გამოჩენილია
-    if (currentScrollY <= 30) {
+    // გვერდის სულ ზედა ნაწილში მენიუ ყოველთვის გამოჩენილია
+    if (currentScrollY <= 20) {
         header.classList.remove('header-hidden');
     } 
-    // ქვემოთ სქროლვა (თუნდაც მცირე მანძილზე) -> მენიუ ჩამოდის/ჩნდება
-    else if (diff > 5) {
-        header.classList.remove('header-hidden');
-    } 
-    // ზემოთ ასქროლვა -> მენიუ იმალება
+    // ზემოთ ასქროლვა (diff < -5) -> მენიუ მომენტალურად იმალება
     else if (diff < -5) {
         header.classList.add('header-hidden');
+    } 
+    // ქვემოთ ჩამოსქროლვა (diff > 5) -> მენიუ ჩამოდის ჩვეულებრივად
+    else if (diff > 5) {
+        header.classList.remove('header-hidden');
     }
 
     lastScrollY = currentScrollY;
 
-    // აქტიური მიშნის ინდიკატორის განახლება
     if (!isScrolling) {
         window.requestAnimationFrame(() => {
             updateActiveMishnaOnScroll();
