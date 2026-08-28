@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="ka" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>მიშნა ქართულად</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <style>
         .dynamic-text-hebrew { font-size: calc(1.25rem * var(--text-scale, 1)); }
         .dynamic-text-georgian { font-size: calc(0.875rem * var(--text-scale, 1)); }
@@ -17,22 +22,56 @@
         }
         
         .header-hidden {
-            transform: translateY(-150%) !important;
+            transform: translateY(-160%) !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .mishna-card {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        mark {
+            background-color: #fde047;
+            color: #1e293b;
+            padding: 0.1em 0.2em;
+            border-radius: 0.25rem;
+        }
+        .dark mark {
+            background-color: #ca8a04;
+            color: #f8fafc;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-4 font-sans pt-60 sm:pt-52">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen p-4 font-sans pt-64 sm:pt-56 transition-colors duration-300">
 
     <div class="max-w-xl mx-auto space-y-4">
         
         <!-- მართვისა და ფილტრების ბლოკი -->
-        <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 fixed top-2 left-4 right-4 max-w-xl mx-auto z-50">
+        <div id="stickyHeader" class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border border-slate-200 dark:border-slate-700 space-y-3 fixed top-2 left-4 right-4 max-w-xl mx-auto z-50 transition-colors duration-300">
             
-            <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
-                <span class="text-blue-600 font-extrabold text-xs">📍</span>
-                <span id="currentMishnaText" class="text-xs font-bold text-blue-900 truncate">აირჩიეთ ან ჩამოქაჩეთ მიშნა...</span>
+            <!-- ბოლო წაკითხულის შეხსენების ზონა -->
+            <div id="lastReadBanner" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl px-3 py-1.5 flex items-center justify-between text-xs">
+                <span id="lastReadText" class="text-amber-900 dark:text-amber-200 font-medium truncate">📖 ბოლო წაკითხული: არცერთი</span>
+                <button onclick="resumeLastRead()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2 py-1 rounded-lg text-[10px] shrink-0 ml-2 transition">გაგრძელება</button>
             </div>
 
+            <!-- სათაური და სწრაფი ღილაკები (DarkMode, Favorites, Font) -->
+            <div class="flex items-center justify-between gap-2">
+                <div id="currentMishnaIndicator" class="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl px-3 py-1.5 flex items-center justify-center gap-2 flex-1 min-w-0">
+                    <span class="text-blue-600 dark:text-blue-400 font-extrabold text-xs">📍</span>
+                    <span id="currentMishnaText" class="text-xs font-bold text-blue-900 dark:text-blue-200 truncate">აირჩიეთ ან ჩამოქაჩეთ მიშნა...</span>
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                    <button onclick="toggleFavoritesFilter()" id="favFilterBtn" title="ფავორიტები" class="w-9 h-9 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs shadow-sm transition flex items-center justify-center">❤️</button>
+                    <button onclick="toggleDarkMode()" title="მუქი თემა" class="w-9 h-9 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs shadow-sm transition flex items-center justify-center">🌓</button>
+                </div>
+            </div>
+
+            <!-- ძებნა და ფონტები -->
             <div class="flex gap-2">
                 <div class="relative flex-1">
                     <input 
@@ -40,33 +79,45 @@
                         id="searchInput" 
                         oninput="handleSearch()"
                         placeholder="🔍 მოძებნე მიშნა, სიტყვა ან თემა..." 
-                        class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition"
+                        class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-blue-500 transition"
                     >
                 </div>
 
-                <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-300 gap-1">
-                    <button onclick="changeFontSize(-0.1)" title="ფონტის შემცირება" class="w-7 h-7 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A-</button>
-                    <button onclick="resetFontSize()" id="fontSizeLabel" title="ზომის ჩამოყრა" class="px-1.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 transition">100%</button>
-                    <button onclick="changeFontSize(0.1)" title="ფონტის გაზრდა" class="w-7 h-7 bg-white hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A+</button>
+                <div class="flex items-center bg-slate-100 dark:bg-slate-700 rounded-xl p-1 border border-slate-300 dark:border-slate-700 gap-1">
+                    <button onclick="changeFontSize(-0.1)" title="ფონტის შემცირება" class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A-</button>
+                    <button onclick="resetFontSize()" id="fontSizeLabel" title="ზომის ჩამოყრა" class="px-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition">100%</button>
+                    <button onclick="changeFontSize(0.1)" title="ფონტის გაზრდა" class="w-7 h-7 bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold rounded-lg text-xs shadow-sm transition flex items-center justify-center">A+</button>
                 </div>
             </div>
 
+            <!-- სელექტორები -->
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <select id="sederSelect" onchange="onSederChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold">
+                <select id="sederSelect" onchange="onSederChange()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold">
                     <option value="">ყველა სედერი</option>
                 </select>
 
-                <select id="masekhetSelect" onchange="onMasekhetChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
+                <select id="masekhetSelect" onchange="onMasekhetChange()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
                     <option value="">ყველა ტრაქტატი</option>
                 </select>
 
-                <select id="perekSelect" onchange="onPerekChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
+                <select id="perekSelect" onchange="onPerekChange()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
                     <option value="">ყველა თავი</option>
                 </select>
 
-                <select id="mishnaSelect" onchange="onMishnaChange()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
+                <select id="mishnaSelect" onchange="onMishnaChange()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-xl p-2 focus:outline-none focus:border-blue-500 font-semibold" disabled>
                     <option value="">ყველა მიშნა</option>
                 </select>
+            </div>
+
+            <!-- პროგრეს ბარი და ქვედა ღილაკები -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                    <span id="progressTitle">კითხვის პროგრესი</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                </div>
             </div>
 
             <div class="flex gap-2">
@@ -81,7 +132,7 @@
                 <button 
                     id="resetBtn" 
                     onclick="resetFilters()" 
-                    class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 px-4 rounded-xl transition"
+                    class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs py-2.5 px-4 rounded-xl transition"
                 >
                     ↺ გასუფთავება
                 </button>
@@ -108,9 +159,9 @@ const MISHNA_STRUCTURE = {
         "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
     },
     "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
-    "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
-    "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
-    "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
+    "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (ნזיר)": 9, "სოტა (სოტა)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
+    "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (ბבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+    "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (თამიდ)": 7, "მიდოთი (მიდოთი)": 5, "კინემი (קינים)": 3 },
     "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
 };
 
@@ -118,6 +169,23 @@ let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
 let isUpdatingFromScroll = false;
+let favorites = JSON.parse(localStorage.getItem('mishnaFavorites')) || [];
+let showOnlyFavorites = false;
+let darkMode = localStorage.getItem('mishnaDarkMode') === 'true';
+
+if (darkMode) {
+    document.documentElement.classList.add('dark');
+}
+
+function toggleDarkMode() {
+    darkMode = !darkMode;
+    localStorage.setItem('mishnaDarkMode', darkMode);
+    if (darkMode) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
 
 function updateFontScale() {
     document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -144,6 +212,17 @@ function cleanString(str) {
         .replace(/[\u0591-\u05C7]/g, '')
         .toLowerCase()
         .trim();
+}
+
+function highlightText(text, query) {
+    if (!query || !text) return text;
+    try {
+        const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    } catch (e) {
+        return text;
+    }
 }
 
 function parseCSV(text) {
@@ -198,7 +277,7 @@ async function fetchMishnaData() {
 
     if (!csvText) {
         document.getElementById('loading').innerHTML = `
-            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+            <div class="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-xl text-center">
                 <p class="font-bold mb-1">⚠️ მონაცემები ვერ ჩაიტვირთა</p>
                 <p class="text-xs">შეამოწმეთ ინტერნეტ კავშირი ან Google Sheet-ის წვდომა.</p>
                 <button onclick="fetchMishnaData()" class="mt-3 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">↻ ხელახლა ცდა</button>
@@ -229,9 +308,36 @@ async function fetchMishnaData() {
     }
 
     populateSederDropdown();
-    renderMishnayot(allMishnayot);
+    checkLastRead();
+    applyFilters();
 }
-  function populateSederDropdown() {
+    </script>
+  <script>
+function checkLastRead() {
+    const lastRead = JSON.parse(localStorage.getItem('mishnaLastRead'));
+    if (lastRead) {
+        const banner = document.getElementById('lastReadBanner');
+        const textEl = document.getElementById('lastReadText');
+        textEl.innerText = `📖 ბოლო წაკითხული: ${lastRead.seder} • ${lastRead.masekhet} (თავი ${lastRead.perek}, მიშნა ${lastRead.mishna})`;
+        banner.classList.remove('hidden');
+    }
+}
+
+function resumeLastRead() {
+    const lastRead = JSON.parse(localStorage.getItem('mishnaLastRead'));
+    if (!lastRead) return;
+
+    document.getElementById('sederSelect').value = lastRead.seder;
+    onSederChange();
+    document.getElementById('masekhetSelect').value = lastRead.masekhet;
+    onMasekhetChange();
+    document.getElementById('perekSelect').value = lastRead.perek;
+    onPerekChange();
+    document.getElementById('mishnaSelect').value = lastRead.mishna;
+    applyFilters();
+}
+
+function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -339,6 +445,30 @@ function onMishnaChange() {
     if (!isUpdatingFromScroll) applyFilters();
 }
 
+function toggleFavoritesFilter() {
+    showOnlyFavorites = !showOnlyFavorites;
+    const btn = document.getElementById('favFilterBtn');
+    if (showOnlyFavorites) {
+        btn.classList.add('bg-rose-500', 'text-white');
+        btn.classList.remove('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+    } else {
+        btn.classList.remove('bg-rose-500', 'text-white');
+        btn.classList.add('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+    }
+    applyFilters();
+}
+
+function toggleFavorite(id) {
+    const index = favorites.indexOf(id);
+    if (index > -1) {
+        favorites.splice(index, 1);
+    } else {
+        favorites.push(id);
+    }
+    localStorage.setItem('mishnaFavorites', JSON.stringify(favorites));
+    applyFilters();
+}
+
 function applyFilters() {
     stopSpeech();
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -348,6 +478,10 @@ function applyFilters() {
     const selectedMishna = document.getElementById('mishnaSelect').value;
 
     let filtered = allMishnayot;
+
+    if (showOnlyFavorites) {
+        filtered = filtered.filter(m => favorites.includes(m.id));
+    }
 
     if (selectedSeder) {
         const cleanSelectedSeder = cleanString(selectedSeder);
@@ -374,13 +508,50 @@ function applyFilters() {
         );
     }
 
-    renderMishnayot(filtered);
+    updateProgress(selectedSeder, selectedMasekhet, filtered);
+    renderMishnayot(filtered, false, query);
+}
+
+function updateProgress(selectedSeder, selectedMasekhet, filteredList) {
+    const titleEl = document.getElementById('progressTitle');
+    const percentEl = document.getElementById('progressPercent');
+    const barEl = document.getElementById('progressBar');
+
+    if (!selectedMasekhet) {
+        titleEl.innerText = "აირჩიეთ ტრაქტატი პროგრესისთვის";
+        percentEl.innerText = "";
+        barEl.style.width = "0%";
+        return;
+    }
+
+    let totalInMasekhet = 0;
+    const sederData = MISHNA_STRUCTURE[selectedSeder];
+    if (sederData && sederData[selectedMasekhet]) {
+        const mData = sederData[selectedMasekhet];
+        if (typeof mData === 'object') {
+            Object.values(mData).forEach(count => totalInMasekhet += count);
+        } else {
+            totalInMasekhet = mData * 10;
+        }
+    }
+
+    let viewedCount = filteredList.length;
+    let percent = totalInMasekhet > 0 ? Math.min(Math.round((viewedCount / totalInMasekhet) * 100), 100) : 0;
+
+    titleEl.innerText = `პროგრესი: ${selectedMasekhet}`;
+    percentEl.innerText = `${percent}%`;
+    barEl.style.width = `${percent}%`;
 }
 
 function handleSearch() { applyFilters(); }
 
 function resetFilters() {
     stopSpeech();
+    showOnlyFavorites = false;
+    const btn = document.getElementById('favFilterBtn');
+    btn.classList.remove('bg-rose-500', 'text-white');
+    btn.classList.add('bg-slate-100', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-200');
+
     document.getElementById('searchInput').value = '';
     document.getElementById('sederSelect').value = '';
     
@@ -398,102 +569,125 @@ function resetFilters() {
 
     renderMishnayot(allMishnayot);
 }
-
-function renderMishnayot(list, isDaily = false) {
+  </script>
+   <script>
+function renderMishnayot(list, isDaily = false, query = '') {
     const app = document.getElementById('app');
     app.innerHTML = ''; 
 
     if (list.length === 0) {
         app.innerHTML = `
-            <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 p-6">
+            <div class="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
                 <p class="text-3xl mb-2">📚</p>
-                <p class="text-sm font-bold text-slate-700 mb-1">ტექსტი ჯერ არ არის დამატებული</p>
-                <p class="text-xs text-slate-500">ამ არჩეული მიშნის თარგმანი მალე დაემატება ბაზაში.</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">ტექსტი ვერ მოიძებნა</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">შეცვალეთ ფილტრები ან საძიებო სიტყვა.</p>
             </div>
         `;
         document.getElementById('currentMishnaText').innerText = "შედეგი არ მოიძებნა";
         return;
     }
 
-    list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily)); });
+    list.forEach(item => { app.appendChild(createMishnaCard(item, isDaily, query)); });
     updateActiveMishnaOnScroll();
 }
 
-function createMishnaCard(item, isDaily) {
+function createMishnaCard(item, isDaily, query = '') {
     const card = document.createElement('div');
-    card.className = `mishna-card bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
+    card.className = `mishna-card bg-white dark:bg-slate-800 rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200 dark:border-slate-700'} mb-6 relative transition-colors duration-300`;
     
+    card.setAttribute('data-id', item.id);
     card.setAttribute('data-seder', item.seder);
     card.setAttribute('data-masekhet', item.masekhet);
     card.setAttribute('data-perek', item.perek);
     card.setAttribute('data-mishna', item.mishna);
 
-    card.innerHTML = `
-        ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
+    const isFav = favorites.includes(item.id);
 
-        <div class="text-center mb-6">
-            <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">${item.seder}</span>
-            <h1 class="text-2xl font-extrabold text-slate-800 mt-1">ტრაქტატი ${item.masekhet}</h1>
-            <p class="text-xs text-slate-500 font-semibold mt-1">თავი ${item.perek} • მიშნა ${item.mishna}</p>
+    card.innerHTML = `
+        <div class="absolute top-3 right-3 flex items-center gap-1.5">
+            ${isDaily ? `<span class="bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
+            <button onclick="toggleFavorite(${item.id})" title="ფავორიტებში დამატება" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-sm transition">
+                ${isFav ? '❤️' : '🤍'}
+            </button>
+            <button onclick="copyMishna(${item.id})" title="კოპირება" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-xs transition">
+                📋
+            </button>
         </div>
 
-        <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
+        <div class="text-center mb-6 pr-16 sm:pr-0">
+            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">${item.seder}</span>
+            <h1 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-1">ტრაქტატი ${item.masekhet}</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-1">თავი ${item.perek} • მიშნა ${item.mishna}</p>
+        </div>
+
+        <div dir="rtl" class="bg-amber-50/60 dark:bg-amber-950/30 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
-                <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400">מקור (ორიგინალი)</span>
+                <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 dark:bg-amber-900/60 hover:bg-amber-300/80 text-amber-900 dark:text-amber-200 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
             </div>
-            <p class="dynamic-text-hebrew font-serif text-slate-900 leading-relaxed">${item.hebrew}</p>
+            <p class="dynamic-text-hebrew font-serif text-slate-900 dark:text-slate-100 leading-relaxed">${highlightText(item.hebrew, query)}</p>
         </div>
 
         ${item.transliteration ? `
-        <div class="bg-slate-50 border-l-4 border-slate-400 p-3 rounded-xl mb-3">
-            <span class="text-[10px] font-bold text-slate-500 block mb-1">ტრანსლიტერაცია</span>
-            <p class="dynamic-text-trans italic text-slate-700 leading-relaxed">${item.transliteration}</p>
+        <div class="bg-slate-50 dark:bg-slate-900/50 border-l-4 border-slate-400 dark:border-slate-600 p-3 rounded-xl mb-3">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">ტრანსლიტერაცია</span>
+            <p class="dynamic-text-trans italic text-slate-700 dark:text-slate-300 leading-relaxed">${highlightText(item.transliteration, query)}</p>
         </div>
         ` : ''}
 
-        <div class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-6 relative">
+        <div class="bg-emerald-50/60 dark:bg-emerald-950/30 border-l-4 border-emerald-500 p-4 rounded-xl mb-6 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-emerald-700">ქართული თარგმანი</span>
-                <button onclick="speakText('${escapeQuotes(item.georgian)}', 'ka')" class="text-xs bg-emerald-200/60 hover:bg-emerald-300/80 text-emerald-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
+                <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">ქართული თარგმანი</span>
+                <button onclick="speakText('${escapeQuotes(item.georgian)}', 'ka')" class="text-xs bg-emerald-200/60 dark:bg-emerald-900/60 hover:bg-emerald-300/80 text-emerald-900 dark:text-emerald-200 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
             </div>
-            <p class="dynamic-text-georgian text-slate-800 leading-relaxed">${item.georgian}</p>
+            <p class="dynamic-text-georgian text-slate-800 dark:text-slate-200 leading-relaxed">${highlightText(item.georgian, query)}</p>
         </div>
 
-        <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <div class="flex border-b border-slate-200 bg-slate-50">
-                <button onclick="switchTab(${item.id}, 'bartenura')" id="tab-bartenura-${item.id}" class="flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white">
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <button onclick="switchTab(${item.id}, 'bartenura')" id="tab-bartenura-${item.id}" class="flex-1 py-3 text-xs font-bold text-purple-600 dark:text-purple-400 border-b-2 border-purple-500 bg-white dark:bg-slate-800">
                     📜 ბარტანურა
                 </button>
-                <button onclick="switchTab(${item.id}, 'kehati')" id="tab-kehati-${item.id}" class="flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600">
+                <button onclick="switchTab(${item.id}, 'kehati')" id="tab-kehati-${item.id}" class="flex-1 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-orange-600">
                     📖 კეჰათი
                 </button>
             </div>
 
-            <div class="p-4 bg-white text-xs leading-relaxed text-slate-600">
+            <div class="p-4 bg-white dark:bg-slate-800 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                 <div id="content-bartenura-${item.id}">
                     <div class="flex justify-between items-center mb-2">
-                        <strong class="text-purple-600">რაბი ყოვადია ბარტანურას განმარტება:</strong>
-                        ${item.bartenura ? `<button onclick="speakText('${escapeQuotes(item.bartenura)}', 'ka')" class="text-[11px] bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
+                        <strong class="text-purple-600 dark:text-purple-400">რაბი ყოვადია ბარტანურას განმარტება:</strong>
+                        ${item.bartenura ? `<button onclick="speakText('${escapeQuotes(item.bartenura)}', 'ka')" class="text-[11px] bg-purple-100 dark:bg-purple-950/60 hover:bg-purple-200 text-purple-800 dark:text-purple-300 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
                     </div>
-                    <p class="dynamic-text-commentary">${item.bartenura || 'განმარტება არ არის.'}</p>
+                    <p class="dynamic-text-commentary">${highlightText(item.bartenura || 'განმარტება არ არის.', query)}</p>
                 </div>
 
                 <div id="content-kehati-${item.id}" class="hidden">
                     <div class="flex justify-between items-center mb-2">
-                        <strong class="text-orange-600">რაბინ პინხას კეჰათის განმარტება:</strong>
-                        ${item.kehati ? `<button onclick="speakText('${escapeQuotes(item.kehati)}', 'ka')" class="text-[11px] bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
+                        <strong class="text-orange-600 dark:text-orange-400">რაბინ პინხას კეჰათის განმარტება:</strong>
+                        ${item.kehati ? `<button onclick="speakText('${escapeQuotes(item.kehati)}', 'ka')" class="text-[11px] bg-orange-100 dark:bg-orange-950/60 hover:bg-orange-200 text-orange-800 dark:text-orange-300 font-bold px-2 py-0.5 rounded transition">🔊 მოსმენა</button>` : ''}
                     </div>
-                    <p class="dynamic-text-commentary">${item.kehati || 'განმარტება არ არის.'}</p>
+                    <p class="dynamic-text-commentary">${highlightText(item.kehati || 'განმარტება არ არის.', query)}</p>
                 </div>
             </div>
         </div>
     `;
     return card;
+}
+
+function copyMishna(id) {
+    const item = allMishnayot.find(m => m.id === id);
+    if (!item) return;
+
+    const textToCopy = `ტრაქტატი ${item.masekhet} (თავი ${item.perek}, მიშნა ${item.mishna})\n\nორიგინალი:\n${item.hebrew}\n\nქართული თარგმანი:\n${item.georgian}\n\nბარტანურა:\n${item.bartenura}`;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('მიშნა დაკოპირდა ბუფერში! 📋');
+    });
 }
 
 let isScrolling = false;
@@ -518,12 +712,15 @@ function updateActiveMishnaOnScroll() {
     if (currentCard !== lastActiveCard) {
         lastActiveCard = currentCard;
         
+        const id = parseInt(currentCard.getAttribute('data-id'));
         const seder = currentCard.getAttribute('data-seder');
         const masekhet = currentCard.getAttribute('data-masekhet');
         const perek = currentCard.getAttribute('data-perek');
         const mishna = currentCard.getAttribute('data-mishna');
 
         document.getElementById('currentMishnaText').innerText = `${seder} • ტრაქტატი ${masekhet} • თავი ${perek} • მიშნა ${mishna}`;
+
+        localStorage.setItem('mishnaLastRead', JSON.stringify({ id, seder, masekhet, perek, mishna }));
 
         isUpdatingFromScroll = true;
         updateDropdownsSilently(seder, masekhet, perek, mishna);
@@ -579,7 +776,6 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
-// 🎯 ძალიან მკაცრი / სწრაფი სქროლის რეაგირება:
 let lastScrollY = window.scrollY;
 let lastScrollTime = Date.now();
 
@@ -624,13 +820,13 @@ function switchTab(id, tab) {
     if (tab === 'bartenura') {
         bartenuraContent.classList.remove('hidden');
         kehatiContent.classList.add('hidden');
-        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 border-b-2 border-purple-500 bg-white";
-        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-orange-600";
+        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-purple-600 dark:text-purple-400 border-b-2 border-purple-500 bg-white dark:bg-slate-800";
+        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-orange-600";
     } else {
         kehatiContent.classList.remove('hidden');
         bartenuraContent.classList.add('hidden');
-        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 border-b-2 border-orange-500 bg-white";
-        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 hover:text-purple-600";
+        kehatiTab.className = "flex-1 py-3 text-xs font-bold text-orange-600 dark:text-orange-400 border-b-2 border-orange-500 bg-white dark:bg-slate-800";
+        bartenuraTab.className = "flex-1 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-purple-600";
     }
 }
 
