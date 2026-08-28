@@ -17,7 +17,7 @@
     <div class="max-w-xl mx-auto space-y-4">
         
         <!-- მართვისა და ფილტრების ბლოკი -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 sticky top-2 z-50">
             
             <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
             <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
@@ -114,6 +114,7 @@ const MISHNA_STRUCTURE = {
 let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
+let isUpdatingFromScroll = false; // თავიდან აიცილებს ციკლურ გამოძახებებს
 
 function updateFontScale() {
     document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -227,7 +228,7 @@ async function fetchMishnaData() {
     populateSederDropdown();
     renderMishnayot(allMishnayot);
 }
-        function populateSederDropdown() {
+   function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -236,6 +237,7 @@ async function fetchMishnaData() {
 }
 
 function onSederChange() {
+    if (isUpdatingFromScroll) return;
     const selectedSeder = document.getElementById('sederSelect').value;
     const masekhetSelect = document.getElementById('masekhetSelect');
     const perekSelect = document.getElementById('perekSelect');
@@ -264,6 +266,7 @@ function onSederChange() {
 }
 
 function onMasekhetChange() {
+    if (isUpdatingFromScroll) return;
     const selectedSeder = document.getElementById('sederSelect').value;
     const selectedMasekhet = document.getElementById('masekhetSelect').value;
     const perekSelect = document.getElementById('perekSelect');
@@ -292,6 +295,7 @@ function onMasekhetChange() {
 }
 
 function onPerekChange() {
+    if (isUpdatingFromScroll) return;
     const selectedSeder = document.getElementById('sederSelect').value;
     const selectedMasekhet = document.getElementById('masekhetSelect').value;
     const selectedPerek = document.getElementById('perekSelect').value;
@@ -328,7 +332,9 @@ function onPerekChange() {
     applyFilters();
 }
 
-function onMishnaChange() { applyFilters(); }
+function onMishnaChange() {
+    if (!isUpdatingFromScroll) applyFilters();
+}
 
 function applyFilters() {
     stopSpeech();
@@ -414,7 +420,10 @@ function createMishnaCard(item, isDaily) {
     const card = document.createElement('div');
     card.className = `mishna-card bg-white rounded-2xl shadow-md overflow-hidden p-5 border ${isDaily ? 'border-amber-400 ring-2 ring-amber-300' : 'border-slate-200'} mb-6 relative`;
     
-    card.setAttribute('data-info', `${item.seder} • ტრაქტატი ${item.masekhet} • თავი ${item.perek} • მიშნა ${item.mishna}`);
+    card.setAttribute('data-seder', item.seder);
+    card.setAttribute('data-masekhet', item.masekhet);
+    card.setAttribute('data-perek', item.perek);
+    card.setAttribute('data-mishna', item.mishna);
 
     card.innerHTML = `
         ${isDaily ? `<span class="absolute top-3 right-3 bg-amber-500 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full shadow-sm">დღის მიშნა</span>` : ''}
@@ -484,27 +493,104 @@ function createMishnaCard(item, isDaily) {
     return card;
 }
 
+// ოპტიმიზებული სქროლის ლოგიკა (Lag-ის გარეშე)
+let isScrolling = false;
+let lastActiveCard = null;
+
 function updateActiveMishnaOnScroll() {
     const cards = document.querySelectorAll('.mishna-card');
     if (cards.length === 0) return;
 
     let currentCard = cards[0];
-    const triggerBottom = window.innerHeight / 2;
+    const triggerBottom = window.innerHeight / 3;
 
-    cards.forEach(card => {
+    for (let card of cards) {
         const box = card.getBoundingClientRect();
         if (box.top <= triggerBottom) {
             currentCard = card;
+        } else {
+            break;
         }
-    });
+    }
 
-    const info = currentCard.getAttribute('data-info');
-    if (info) {
-        document.getElementById('currentMishnaText').innerText = info;
+    if (currentCard !== lastActiveCard) {
+        lastActiveCard = currentCard;
+        
+        const seder = currentCard.getAttribute('data-seder');
+        const masekhet = currentCard.getAttribute('data-masekhet');
+        const perek = currentCard.getAttribute('data-perek');
+        const mishna = currentCard.getAttribute('data-mishna');
+
+        document.getElementById('currentMishnaText').innerText = `${seder} • ტრაქტატი ${masekhet} • თავი ${perek} • მიშნა ${mishna}`;
+
+        // ავტომატურად განვაახლოთ სელექტორები (ფილტრაციის ხელახლა გამოძახების გარეშე)
+        isUpdatingFromScroll = true;
+        updateDropdownsSilently(seder, masekhet, perek, mishna);
+        isUpdatingFromScroll = false;
     }
 }
 
-window.addEventListener('scroll', updateActiveMishnaOnScroll);
+function updateDropdownsSilently(seder, masekhet, perek, mishna) {
+    const sederSelect = document.getElementById('sederSelect');
+    const masekhetSelect = document.getElementById('masekhetSelect');
+    const perekSelect = document.getElementById('perekSelect');
+    const mishnaSelect = document.getElementById('mishnaSelect');
+
+    // 1. Seder
+    if (sederSelect.value !== seder) {
+        sederSelect.value = seder;
+    }
+
+    // 2. Masekhet
+    if (seder && MISHNA_STRUCTURE[seder]) {
+        const masekhtot = Object.keys(MISHNA_STRUCTURE[seder]);
+        masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+        masekhtot.forEach(m => {
+            masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+        masekhetSelect.disabled = false;
+        masekhetSelect.value = masekhet;
+    }
+
+    // 3. Perek
+    if (seder && masekhet && MISHNA_STRUCTURE[seder]?.[masekhet]) {
+        const masekhetData = MISHNA_STRUCTURE[seder][masekhet];
+        let totalPerakim = typeof masekhetData === 'object' ? Object.keys(masekhetData).length : masekhetData;
+        
+        perekSelect.innerHTML = '<option value="">ყველა თავი</option>';
+        for (let i = 1; i <= totalPerakim; i++) {
+            perekSelect.innerHTML += `<option value="${i}">თავი ${i}</option>`;
+        }
+        perekSelect.disabled = false;
+        perekSelect.value = perek;
+    }
+
+    // 4. Mishna
+    if (perek) {
+        let maxMishna = 10;
+        const masekhetData = MISHNA_STRUCTURE[seder]?.[masekhet];
+        if (typeof masekhetData === 'object' && masekhetData[perek]) {
+            maxMishna = masekhetData[perek];
+        }
+        
+        mishnaSelect.innerHTML = '<option value="">ყველა მიშნა</option>';
+        for (let i = 1; i <= maxMishna; i++) {
+            mishnaSelect.innerHTML += `<option value="${i}">მიშნა ${i}</option>`;
+        }
+        mishnaSelect.disabled = false;
+        mishnaSelect.value = mishna;
+    }
+}
+
+window.addEventListener('scroll', () => {
+    if (!isScrolling) {
+        window.requestAnimationFrame(() => {
+            updateActiveMishnaOnScroll();
+            isScrolling = false;
+        });
+        isScrolling = true;
+    }
+});
 
 function switchTab(id, tab) {
     const bartenuraContent = document.getElementById(`content-bartenura-${id}`);
