@@ -155,11 +155,11 @@ const MISHNA_STRUCTURE = {
     },
     "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (მეგילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
     "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (ნזיר)": 9, "სოტა (სოტა)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
-    "ნეზიკინი (ნזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (ბבא בתרא)": 10, "სანჰედრინი (סנהדრიן)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზרה (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+    "ნეზიკინი (ნזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (ბבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზרה (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
     "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (მנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (თამიდ)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
     "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქצინი (עוקצין)": 3 }
 };
-     let allMishnayot = [];
+        let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
 let isUpdatingFromScroll = false;
@@ -301,18 +301,18 @@ async function fetchMishnaData() {
     updateProgressAndStats();
     renderMishnayot(allMishnayot);
 
-    // ბოლო ნანახი ადგილის აღდგენა საიტიდან გასვლის შემდეგ
+    // ზუსტი დაბრუნება ბოლო ნანახ ადგილზე
     const savedLastId = localStorage.getItem('mishnaLastId');
     if (savedLastId) {
-        const targetCard = document.querySelector(`.mishna-card[data-id="${savedLastId}"]`);
-        if (targetCard) {
-            setTimeout(() => {
+        setTimeout(() => {
+            const targetCard = document.querySelector(`.mishna-card[data-id="${savedLastId}"]`);
+            if (targetCard) {
                 targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
+            }
+        }, 400);
     }
-        }
-       function updateProgressAndStats() {
+}
+        function updateProgressAndStats() {
     const totalCount = allMishnayot.length;
     const readCount = readHistory.length;
     const percent = totalCount > 0 ? Math.round((readCount / totalCount) * 100) : 0;
@@ -631,8 +631,7 @@ function createMishnaCard(item, isDaily) {
     markAsRead(item.id);
     return card;
 }
-
-let isScrolling = false;
+        let isScrolling = false;
 let lastActiveCard = null;
 
 function updateActiveMishnaOnScroll() {
@@ -660,7 +659,7 @@ function updateActiveMishnaOnScroll() {
         const mishna = currentCard.getAttribute('data-mishna');
         const cardId = currentCard.getAttribute('data-id');
 
-        // ბოლო ნანახი მიშნის ID-ს შენახვა ლოკალურ მეხსიერებაში
+        // აქტიური მიშნის შენახვა ლოკალურ მეხსიერებაში
         if (cardId) {
             localStorage.setItem('mishnaLastId', cardId);
         }
