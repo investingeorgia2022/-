@@ -13,7 +13,7 @@
         
         /* მენიუს გლუვი დამალვა/გამოჩენა */
         #stickyHeader {
-            transition: transform 0.25s ease-in-out;
+            transition: transform 0.2s ease-in-out;
         }
         .header-hidden {
             transform: translateY(-120%);
@@ -24,7 +24,7 @@
 
     <div class="max-w-xl mx-auto space-y-4">
         
-        <!-- მართვისა და ფილტრების ბლოკი (ავტომატურად დამალვადი) -->
+        <!-- მართვისა და ფილტრების ბლოკი -->
         <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 sticky top-2 z-50">
             
             <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
@@ -444,7 +444,7 @@ function createMishnaCard(item, isDaily) {
 
         <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
+                <span class="text-[10px] font-bold text-amber-700">מקור (ორიגინალი)</span>
                 <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
@@ -584,22 +584,36 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
-// სქროლის ოპტიმიზებული ლოგიკა + მენიუს დამალვა/გამოჩენა
+// ახალი ლოგიკა: მენიუ ჩნდება მხოლოს სწრაფი ქვემოთ ჩამოსქროლვისას
 let lastScrollY = window.scrollY;
+let lastScrollTime = Date.now();
 
 window.addEventListener('scroll', () => {
     const currentScrollY = window.scrollY;
+    const currentTime = Date.now();
     const header = document.getElementById('stickyHeader');
 
-    // მენიუს დამალვა/გამოჩენის ლოგიკა
-    if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // ჩამოსქროლვისას - იმალება
-        header.classList.add('header-hidden');
-    } else {
-        // ასქროლვისას (ან სულ ზემოთ ყოფნისას) - ჩნდება
+    const scrollDelta = currentScrollY - lastScrollY;
+    const timeDelta = currentTime - lastScrollTime;
+
+    // გვერდის საწყისში (20px-მდე) მენიუ ყოველთვის გამოჩენილია
+    if (currentScrollY <= 20) {
         header.classList.remove('header-hidden');
+    } else if (timeDelta > 0) {
+        const scrollSpeed = scrollDelta / timeDelta; // სქროლვის სიჩქარე (px/ms)
+
+        // თუ ქვემოთ ჩამოსქროლვა არის სწრაფი (სიჩქარე > 1.2 px/ms)
+        if (scrollSpeed > 1.2) {
+            header.classList.remove('header-hidden'); // ჩამოიშლება მენიუ
+        } 
+        // ნებისმიერი სხვა მოძრაობისას (ნელი ქვემოთ სქროლი ან ზემოთ ასქროლი) - იმალება
+        else if (scrollDelta < 0 || (scrollDelta > 0 && scrollSpeed <= 1.2)) {
+            header.classList.add('header-hidden');
+        }
     }
+
     lastScrollY = currentScrollY;
+    lastScrollTime = currentTime;
 
     // აქტიური მიშნის ინდიკატორის განახლება
     if (!isScrolling) {
