@@ -10,14 +10,22 @@
         .dynamic-text-georgian { font-size: calc(0.875rem * var(--text-scale, 1)); }
         .dynamic-text-trans { font-size: calc(0.75rem * var(--text-scale, 1)); }
         .dynamic-text-commentary { font-size: calc(0.75rem * var(--text-scale, 1)); }
+        
+        /* მენიუს გლუვი დამალვა/გამოჩენა */
+        #stickyHeader {
+            transition: transform 0.25s ease-in-out;
+        }
+        .header-hidden {
+            transform: translateY(-120%);
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen p-4 font-sans">
 
     <div class="max-w-xl mx-auto space-y-4">
         
-        <!-- მართვისა და ფილტრების ბლოკი -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 sticky top-2 z-50">
+        <!-- მართვისა და ფილტრების ბლოკი (ავტომატურად დამალვადი) -->
+        <div id="stickyHeader" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 space-y-3 sticky top-2 z-50">
             
             <!-- მიშნის მიმდინარე სტატუსის ინდიკატორი -->
             <div id="currentMishnaIndicator" class="bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5 text-center flex items-center justify-center gap-2">
@@ -228,7 +236,7 @@ async function fetchMishnaData() {
     populateSederDropdown();
     renderMishnayot(allMishnayot);
 }
-   function populateSederDropdown() {
+    function populateSederDropdown() {
     const sederSelect = document.getElementById('sederSelect');
     sederSelect.innerHTML = '<option value="">ყველა სედერი</option>';
     Object.keys(MISHNA_STRUCTURE).forEach(seder => {
@@ -436,7 +444,7 @@ function createMishnaCard(item, isDaily) {
 
         <div dir="rtl" class="bg-amber-50/60 border-r-4 border-amber-500 p-4 rounded-xl mb-3 relative">
             <div class="flex justify-between items-center mb-1">
-                <span class="text-[10px] font-bold text-amber-700">מקור (ორიגინალი)</span>
+                <span class="text-[10px] font-bold text-amber-700">מקור (ორიგინალი)</span>
                 <button onclick="speakText('${escapeQuotes(item.hebrew)}', 'he')" class="text-xs bg-amber-200/60 hover:bg-amber-300/80 text-amber-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1">
                     <span>🔊</span> <span>მოსმენა</span>
                 </button>
@@ -576,7 +584,24 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
     }
 }
 
+// სქროლის ოპტიმიზებული ლოგიკა + მენიუს დამალვა/გამოჩენა
+let lastScrollY = window.scrollY;
+
 window.addEventListener('scroll', () => {
+    const currentScrollY = window.scrollY;
+    const header = document.getElementById('stickyHeader');
+
+    // მენიუს დამალვა/გამოჩენის ლოგიკა
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // ჩამოსქროლვისას - იმალება
+        header.classList.add('header-hidden');
+    } else {
+        // ასქროლვისას (ან სულ ზემოთ ყოფნისას) - ჩნდება
+        header.classList.remove('header-hidden');
+    }
+    lastScrollY = currentScrollY;
+
+    // აქტიური მიშნის ინდიკატორის განახლება
     if (!isScrolling) {
         window.requestAnimationFrame(() => {
             updateActiveMishnaOnScroll();
