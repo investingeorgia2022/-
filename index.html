@@ -115,6 +115,7 @@
 
     let allMishnayot = [];
     let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
+    let currentAudio = null; // აუდიო ფაილის ობიექტი
 
     function updateFontScale() {
         document.documentElement.style.setProperty('--text-scale', fontScale);
@@ -139,7 +140,7 @@
         if (!str) return '';
         return str.toString().replace(/\(.*\)/g, '').replace(/[\u0590-\u05FF]/g, '').toLowerCase().trim();
     }
-         function parseCSV(text) {
+           function parseCSV(text) {
         const lines = [];
         let row = [];
         let inQuotes = false;
@@ -342,7 +343,7 @@
             const cleanSelectedSeder = cleanString(selectedSeder);
             filtered = filtered.filter(m => cleanString(m.seder).includes(cleanSelectedSeder) || cleanSelectedSeder.includes(cleanString(m.seder)));
         }
-        if (selectedMelsius) {
+        if (selectedMasekhet) {
             const cleanSelectedMasekhet = cleanString(selectedMasekhet);
             filtered = filtered.filter(m => cleanString(m.masekhet).includes(cleanSelectedMasekhet) || cleanSelectedMasekhet.includes(cleanString(m.masekhet)));
         }
@@ -531,17 +532,33 @@
     }
 
     function stopSpeech() {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
     }
 
+    /* განახლებული გახმოვანება: ქართულისთვის Google TTS, ებრაულისთვის ბრაუზერის ხმა */
     function speakText(text, lang) {
-        if (!('speechSynthesis' in window)) return;
         stopSpeech();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === 'he' ? 'he-IL' : 'ka-GE';
-        window.speechSynthesis.speak(utterance);
+        if (!text) return;
+
+        if (lang === 'ka') {
+            const encodedText = encodeURIComponent(text);
+            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=ka&client=tw-ob`;
+            currentAudio = new Audio(audioUrl);
+            currentAudio.play().catch(e => {
+                console.error("Audio playback error:", e);
+            });
+        } else {
+            if (!('speechSynthesis' in window)) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'he-IL';
+            window.speechSynthesis.speak(utterance);
+        }
     }
 
     function showDailyMishna() {
@@ -552,27 +569,22 @@
         renderMishnayot([allMishnayot[index]], true);
     }
 
-    // ძლიერი/სწრაფი სქროლის ლოგიკა
+    // ძლიერი სქროლის ლოგიკა
     let lastScrollTop = 0;
     const appContainer = document.getElementById('app');
     const headerContainer = document.getElementById('headerContainer');
-
-    // ზღვარი: 25 პიქსელზე მეტი უნდა იყოს სქროლვის მანძილი (დელტა) რომ ჩამოიშალოს
     const FAST_SCROLL_THRESHOLD = 25; 
 
     appContainer.addEventListener('scroll', () => {
         let currentScroll = appContainer.scrollTop;
         let delta = currentScroll - lastScrollTop;
 
-        // სულ მაღლა ასვლისას ყოველთვის გამოჩნდეს
         if (currentScroll <= 10) {
             headerContainer.classList.remove('header-hidden');
         } 
-        // ოდნავ მაინც ქვევით სქროლვისას -> აიკეცოს
         else if (delta > 5) {
             headerContainer.classList.add('header-hidden');
         } 
-        // მხოლოდ ძლიერი/სწრაფი ზემოთ სქროლვისას (delta < -25) -> ჩამოიშალოს
         else if (delta < -FAST_SCROLL_THRESHOLD) {
             headerContainer.classList.remove('header-hidden');
         }
@@ -586,5 +598,4 @@
     };
     </script>
 </body>
-</html>
-   
+</html> 
