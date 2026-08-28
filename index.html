@@ -62,8 +62,7 @@
                     <button onclick="cycleTheme()" id="themeBtn" title="თემა (Light/Dark/OLED)" class="w-8 h-8 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs shadow-sm transition flex items-center justify-center">🌓</button>
                 </div>
             </div>
-
-            <div class="flex gap-2">
+                      <div class="flex gap-2">
                 <div class="relative flex-1">
                     <input 
                         type="text" 
@@ -127,7 +126,8 @@
                 </div>
             </div>
         </div>
-                <div id="app" class="space-y-6 pt-2">
+
+        <div id="app" class="space-y-6 pt-2">
             <div id="loading" class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent mb-2"></div>
                 <p class="text-sm font-bold text-slate-500">მიშნები იტვირთება...</p>
@@ -159,8 +159,7 @@ const MISHNA_STRUCTURE = {
     "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "მენახოთი (მנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (თამიდ)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
     "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზાવીმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქצინი (עוקצין)": 3 }
 };
-
-let allMishnayot = [];
+   let allMishnayot = [];
 let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
 let currentAudio = null;
 let isUpdatingFromScroll = false;
@@ -210,7 +209,9 @@ function cleanString(str) {
     if (!str) return '';
     return str.toString()
         .replace(/[\u0591-\u05C7]/g, '')
+        .replace(/[()\/]/g, ' ')
         .toLowerCase()
+        .replace(/\s+/g, ' ')
         .trim();
 }
 
@@ -246,7 +247,8 @@ function parseCSV(text) {
     }
     return lines;
 }
-        async function fetchMishnaData() {
+
+async function fetchMishnaData() {
     let csvText = '';
     try {
         const controller = new AbortController();
@@ -299,8 +301,7 @@ function parseCSV(text) {
     updateProgressAndStats();
     renderMishnayot(allMishnayot);
 }
-
-function updateProgressAndStats() {
+    function updateProgressAndStats() {
     const totalCount = allMishnayot.length;
     const readCount = readHistory.length;
     const percent = totalCount > 0 ? Math.round((readCount / totalCount) * 100) : 0;
@@ -665,7 +666,17 @@ function updateDropdownsSilently(seder, masekhet, perek, mishna) {
         sederSelect.value = seder;
     }
 
-if (seder && masekhet && MISHNA_STRUCTURE[seder]?.[masekhet]) {
+    if (seder && MISHNA_STRUCTURE[seder]) {
+        const masekhtot = Object.keys(MISHNA_STRUCTURE[seder]);
+        masekhetSelect.innerHTML = '<option value="">ყველა ტრაქტატი</option>';
+        masekhtot.forEach(m => {
+            masekhetSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+        masekhetSelect.disabled = false;
+        masekhetSelect.value = masekhet;
+    }
+
+    if (seder && masekhet && MISHNA_STRUCTURE[seder]?.[masekhet]) {
         const masekhetData = MISHNA_STRUCTURE[seder][masekhet];
         let totalPerakim = typeof masekhetData === 'object' ? Object.keys(masekhetData).length : masekhetData;
         
