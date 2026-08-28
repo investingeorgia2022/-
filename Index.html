@@ -492,109 +492,129 @@
                     </button>` : ''}
                     ${item.bartenura ? `
                     <button id="tab-bartenura-${item.id}" onclick="switchTab(${item.id}, 'bartenura')" class="flex-1 py-2 px-3 text-xs font-bold rounded-lg ${!item.kehati ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition flex items-center justify-center gap-1.5">
-                        <span>📜</span>
-                        <span>ბარტანურა</span>
-                    </button>` : ''}
-                </div>
+<script>
+const SHEET_ID = '1fjSotzWwWe7MYtSwzB4hIOssgZFApM3_ZYOUIK9KE4Q';
+// პირდაპირი ბმული და რამდენიმე ალტერნატიული პროქსი
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+const PROXIES = [
+    CSV_URL,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(CSV_URL)}`,
+    `https://corsproxy.io/?${encodeURIComponent(CSV_URL)}`
+];
 
-                ${item.kehati ? `
-                <div id="content-kehati-${item.id}" class="bg-emerald-50/60 border-l-4 border-emerald-500 p-4 rounded-xl mb-3">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-emerald-800 uppercase flex items-center gap-1">
-                            <span>📖</span> კეჰათის განმარტება
-                        </span>
-                        <button onclick="speakText('${escapeQuotes(item.kehati)}', 'ka')" class="text-xs bg-emerald-200/70 hover:bg-emerald-300 text-emerald-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
-                            <span>🔊</span> <span>მოსმენა</span>
-                        </button>
-                    </div>
-                    <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.kehati}</p>
-                </div>` : ''}
+const MISHNA_STRUCTURE = {
+    "ზერაყიმი (זרעים)": { 
+        "ბერახოთი (ברכות)": { 1: 5, 2: 8, 3: 6, 4: 7, 5: 5, 6: 8, 7: 5, 8: 8, 9: 5 },
+        "ფეა (פאה)": 8, "დმაი (דמאי)": 7, "ქილაყიმი (כלאים)": 9, "შევიყითი (שביעית)": 10, "თრუმოთი (תרומות)": 11, "მაყასროთი (מעשרות)": 5, "მაყასერ შენი (מעשר שני)": 5, "ხალა (חלה)": 4, "ყორლა (ערלה)": 3, "ბიქურიმი (ביכורים)": 4 
+    },
+    "მოყედი (מועד)": { "შაბათი (שבת)": 24, "ყერუვინი (עירובין)": 10, "ფესახიმი (פסחים)": 10, "შეკალიმი (שקלים)": 8, "იომა (יומא)": 8, "სუქა (סוכה)": 5, "ბეცა (ביצה)": 5, "როშ ჰაშანა (ראש השנה)": 4, "თაყანითი (תענית)": 4, "მეგილა (מגילה)": 4, "მოყედ კატანი (מועד קטן)": 3, "ხაგიგა (חגיגה)": 3 },
+    "ნაშიმი (נשים)": { "იევამოთი (יבמות)": 16, "ქეთუბოთი (כתובות)": 13, "ნედარიმი (נדרים)": 11, "ნაზირი (נזיר)": 9, "სოტა (סוטה)": 9, "გიტინი (גיטין)": 9, "ქიდუშინი (קידושין)": 4 },
+    "ნეზიკინი (נזיקין)": { "ბავა კამა (בבא קמא)": 10, "ბავა მეციყა (בבא מציעא)": 10, "ბავა ბათრა (בבא בתרא)": 10, "სანჰედრინი (סנהדרין)": 11, "მაქოთი (מכות)": 3, "შევუოთი (שבועות)": 8, "ყედუიოთი (עדויות)": 8, "ყავოდა ზარა (עבודה זרה)": 5, "ავოთი / პირქე ავოთი (אבות)": 6, "ჰორაიოთი (הוריות)": 3 },
+    "კოდაშიმი (קדשים)": { "ზებახიმი (זבחים)": 14, "מენახოთי (מנחות)": 13, "ხულინი (חולין)": 12, "ბექოროთი (בכורות)": 9, "ყარაქინი (ערכין)": 9, "თემურა (תמורה)": 7, "ქრითოთი (כריתות)": 6, "მეყილა (מעילה)": 6, "თამიდი (תמיד)": 7, "მიდოთი (מידות)": 5, "კინემი (קינים)": 3 },
+    "ტაჰაროთი (טהרות)": { "ქელიმი (כלים)": 30, "ოჰოლოტი (אהלות)": 18, "ნეგაყიმი (נגעים)": 14, "ფარა (פרה)": 12, "ტაჰაროთი (טהרות)": 10, "მიქვაოთი (מקוואות)": 10, "ნიდა (נדה)": 10, "მახშირინი (מכשירין)": 6, "ზავიმი (זבים)": 5, "ტევულ იომი (טבול יום)": 4, "იადაყიმი (ידיים)": 4, "ყუქცინი (עוקצין)": 3 }
+};
 
-                ${item.bartenura ? `
-                <div id="content-bartenura-${item.id}" class="bg-purple-50/60 border-l-4 border-purple-500 p-4 rounded-xl mb-3" style="display: ${item.kehati ? 'none' : 'block'};">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-purple-800 uppercase flex items-center gap-1">
-                            <span>📜</span> ბარტანურას განმარტება
-                        </span>
-                        <button onclick="speakText('${escapeQuotes(item.bartenura)}', 'ka')" class="text-xs bg-purple-200/70 hover:bg-purple-300 text-purple-900 font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 shadow-sm">
-                            <span>🔊</span> <span>მოსმენა</span>
-                        </button>
-                    </div>
-                    <p class="dynamic-text-commentary text-slate-700 leading-relaxed">${item.bartenura}</p>
-                </div>` : ''}
-            </div>` : ''}
-        `;
-        return card;
-    }
+let allMishnayot = [];
+let fontScale = parseFloat(localStorage.getItem('mishnaFontScale')) || 1;
+let currentAudio = null;
 
-    function escapeQuotes(str) {
-        if (!str) return '';
-        return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
-    }
+// ოპტიმიზებული და უსაფრთხო CSV პარსერი
+function parseCSV(text) {
+    const lines = [];
+    let row = [];
+    let current = '';
+    let inQuotes = false;
 
-    function stopSpeech() {
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio = null;
-        }
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-    }
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
 
-    function speakText(text, lang) {
-        stopSpeech();
-        if (!text) return;
-
-        if (lang === 'ka') {
-            const encodedText = encodeURIComponent(text);
-            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=ka&client=tw-ob`;
-            currentAudio = new Audio(audioUrl);
-            currentAudio.play().catch(e => {
-                console.error("Audio playback error:", e);
-            });
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            row.push(current.trim());
+            current = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+            if (char === '\r' && nextChar === '\n') i++;
+            row.push(current.trim());
+            if (row.some(field => field !== '')) lines.push(row);
+            row = [];
+            current = '';
         } else {
-            if (!('speechSynthesis' in window)) return;
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'he-IL';
-            window.speechSynthesis.speak(utterance);
+            current += char;
+        }
+    }
+    if (current || row.length) {
+        row.push(current.trim());
+        lines.push(row);
+    }
+    return lines;
+}
+
+// მონაცემების წამოღება რეზერვების გადამოწმებით
+async function fetchMishnaData() {
+    let csvText = '';
+    
+    for (const url of PROXIES) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                csvText = await response.text();
+                if (csvText && csvText.includes(',')) break; // წარმატებით ჩაიტვირთა
+            }
+        } catch (e) {
+            console.warn(`Failed to fetch from: ${url}`);
         }
     }
 
-    function showDailyMishna() {
-        if (allMishnayot.length === 0) return;
-        const today = new Date();
-        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-        const index = dayOfYear % allMishnayot.length;
-        renderMishnayot([allMishnayot[index]], true);
+    if (!csvText) {
+        document.getElementById('loading').innerHTML = `
+            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-center">
+                <p class="font-bold mb-1">⚠️ მონაცემები ვერ ჩაიტვირთა</p>
+                <p class="text-xs mb-3">დარწმუნდით, რომ Google Sheet გაზიარებულია: "Anyone with the link can view"</p>
+                <button onclick="fetchMishnaData()" class="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-700 transition">↻ ხელახლა ცდა</button>
+            </div>
+        `;
+        return;
     }
 
-    let lastScrollTop = 0;
-    const appContainer = document.getElementById('app');
-    const headerContainer = document.getElementById('headerContainer');
-    const FAST_SCROLL_THRESHOLD = 25; 
+    try {
+        const rows = parseCSV(csvText);
+        allMishnayot = [];
 
-    appContainer.addEventListener('scroll', () => {
-        let currentScroll = appContainer.scrollTop;
-        let delta = currentScroll - lastScrollTop;
+        for (let i = 1; i < rows.length; i++) {
+            const data = rows[i];
+            if (!data || data.length < 5) continue; 
 
-        if (currentScroll <= 10) {
-            headerContainer.classList.remove('header-hidden');
-        } 
-        else if (delta > 5) {
-            headerContainer.classList.add('header-hidden');
-        } 
-        else if (delta < -FAST_SCROLL_THRESHOLD) {
-            headerContainer.classList.remove('header-hidden');
+            allMishnayot.push({
+                id: i,
+                seder: (data[1] || '').trim(),
+                masekhet: (data[2] || '').trim(),
+                perek: (data[3] || '').trim(),
+                mishna: (data[4] || '').trim(),
+                hebrew: data[5] || '',
+                transliteration: data[6] || '',
+                georgian: data[7] || '',
+                kehati: data[8] || '',
+                bartenura: data[9] || ''
+            });
         }
 
-        lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-    });
-
-    window.onload = () => {
-        updateFontScale();
-        fetchMishnaData();
-    };
-    </script>
-</body>
-</html>
+        populateSederDropdown();
+        renderMishnayot(allMishnayot);
+    } catch (err) {
+        console.error("Parsing Error:", err);
+        document.getElementById('loading').innerHTML = `<p class="text-xs text-red-500 font-bold">მონაცემების დამუშავების შეცდომა.</p>`;
+    }
+}
+</script>
